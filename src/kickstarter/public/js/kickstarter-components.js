@@ -212,11 +212,12 @@ Vue.component('wicked-panel', {
 });
 
 Vue.component('wicked-input', {
-    props: ['label', 'readonly', 'number', 'value', 'envVar', 'hint', 'textarea', 'json', 'height'],
+    props: ['label', 'readonly', 'number', 'value', 'envVar', 'hint', 'textarea', 'json', 'height', 'plugins'],
     data: function () {
         const isReadOnly = typeof this.readonly !== 'undefined';
         const isTextarea = typeof this.textarea !== 'undefined';
         const isNumber = typeof this.number !== 'undefined';
+        const isPlugin = typeof this.plugins !== 'undefined';
         const isJson = typeof this.json !== 'undefined';
         const envVarName = typeof this.envVar === 'string' && this.envVar !== '' ? this.envVar : null;
         const textareaHeight = typeof this.height === 'string' && this.height !== '' ? this.height : '100px';
@@ -224,9 +225,10 @@ Vue.component('wicked-input', {
             internalId: randomId(),
             isReadOnly: isReadOnly,
             isNumber: isNumber,
-            isTextarea: isTextarea,
+            isTextarea: isTextarea || isPlugin,
             textareaHeight: textareaHeight,
             isJson: isJson,
+            isPlugin: isPlugin,
             isValidInput: true,
             envVarName: envVarName
         };
@@ -279,9 +281,24 @@ Vue.component('wicked-input', {
             showEnvExplanation();
         },
         verifyValue: function (value) {
-            if (this.isJson) {
+            if (this.isJson || this.isPlugin) {
                 try {
-                    JSON.parse(value);
+                    const o = JSON.parse(value);
+                    
+                    if (this.isPlugin) {
+                        if (!Array.isArray(o)) {
+                            throw new Error('Plugin configuration must be an array.');
+                        }
+
+                        for (let i = 0; i < o.length; ++i) {
+                            const p = o[i];
+        
+                            if(!p.name || !p.config) {
+                                throw new Error('Plugin must have name and config sections.');
+                            }
+                        }
+                    }
+
                     this.isValidInput = true;
                 } catch (err) {
                     this.isValidInput = false;
@@ -333,6 +350,7 @@ Vue.component('wicked-input', {
                           :style="'height:' + textareaHeight"
                           v-on:input="verifyValue($event.target.value)"
                 >{{ value }}</textarea>
+                <p v-if="isPlugin && !isValidInput"><span style="color:red; font-weight:bold;">ERROR:</span> Content is not valid JSON plugin configuration.</p>
                 <p v-if="isJson && !isValidInput"><span style="color:red; font-weight:bold;">ERROR:</span> Content is not valid JSON.</p>
                 <div v-if="!isJson">
                     <p></p>
@@ -427,9 +445,9 @@ Vue.component('wicked-routes', {
         addRoute: function (event) {
             this.values.push({
                 strip_path: true,
+                no_authorization: false,
                 preserve_host: false,
-                // TODO: removing for now, need to rethink the whole concept
-                // plugins: [],
+                plugins: [],
                 protocols: [],
                 methods: []
             });
@@ -456,10 +474,14 @@ Vue.component('wicked-routes', {
                         <wicked-checkbox v-model="route.strip_path" label="<b>Strip Uri</b>. Check this box if you don't want to pass the uri to the backend URL as well. Normally you wouldn't want that." />
                         <wicked-checkbox v-model="route.preserve_host" label="<b>Preserve Host</b>. Preserves the original <code>Host</code> header sent by the client, instead of replacing it with the hostname of the <code>upstream_url</code>." />
                         <wicked-panel title="Advanced Settings" type="default" :collapsible=true :open=false>
+                          <wicked-checkbox v-model="route.no_authorization" label="<b>No Authorization</b>. Check this box if you don't want to use <b>Authorization Mode</b> specified for API for this Route." />
                           <wicked-string-array v-model="route.hosts" :allow-empty=true label="Hosts:" hint="A list of domain names that match this Route. For example: <code>example.com</code>. By default it will use <code>APIHOST</code>. At least one of <code>hosts</code>, <code>paths</code> or <code>methods</code> must be set." />
                           <wicked-toggle-array v-model="route.protocols" options="HTTP,HTTPS" width="6em" label="Protocols:" hint="A list of the protocols this Route should allow. By default it is <code>HTTP, HTTPS</code> which means that the Route accepts both."/>
                           <wicked-toggle-array v-model="route.methods" options="GET,HEAD,POST,PUT,PATCH,DELETE" width="6em" label="Methods:" hint="A list of HTTP methods that match this Route. By default it is all. At least one of <code>hosts</code>, <code>paths</code> or <code>methods</code> must be set."/>
-                          <!-- <wicked-input v-model="route.plugins" :textarea=true :json=true label="Plugin configuration for this Route:" height="30em" hint="Plugin configuration that will be applied for this Route"/> -->
+
+                          <wicked-panel title="Route Plugin Configuration" type="success" :open="false">
+                            <wicked-input v-model="route.plugins" :plugins=true label="Plugin configuration for this Route:" height="30em" hint="Plugin configuration that will be applied for this Route"/>
+                          </wicked-panel>
                         </wicked-panel>
                     </div>
                 </div>

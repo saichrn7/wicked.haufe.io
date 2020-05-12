@@ -203,7 +203,7 @@ const vm = new Vue({
 });
 
 function isValidURL(uri) {
-    var res = uri.match(/^((((http|https|ws|wss):(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
+    let res = uri.match(/^((((http|https|ws|wss):(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
     if (res == null)
         return false;
     else
@@ -257,6 +257,29 @@ function validateData(callback) {
         //protocol aka Schema is lowercased
         if ( route.protocols ) {
             route.protocols = route.protocols.map( e => e.toLowerCase() );
+        }
+
+        //validate other plugins
+        if(route.plugins) {
+            try {
+                const otherPlugins = JSON.parse(route.plugins);
+                if (!Array.isArray(otherPlugins)) {
+                    throw new Error('Plugin configuration must be an array.');
+                }
+
+                for (let i = 0; i < otherPlugins.length; ++i) {
+                    const p = otherPlugins[i];
+
+                    if(!p.name || !p.config) {
+                        throw new Error('Plugin must have name and config sections.');
+                    }
+                }    
+
+                route.plugins = JSON.stringify(otherPlugins, null, 2);    
+            }
+            catch(e) {
+                error = error + ('\nRoute plugins: ' + e);
+            }
         }
 
         //remove empty arrays, per kong spec, no value should be provided
