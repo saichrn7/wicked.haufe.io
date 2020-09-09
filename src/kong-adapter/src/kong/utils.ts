@@ -298,6 +298,44 @@ function kongGet(url: string, callback: Callback<any>) {
     kongAction('GET', url, null, 200, callback);
 };
 
+function kongPagingGet(url: string, callback: Callback<any>) {
+    let pagingUrl;
+    const size = 1000;
+    if (url.indexOf('?') > 0)
+        pagingUrl = `${url}&size=${size}`;
+    else
+        pagingUrl = `${url}?size=${size}`;
+    console.log(pagingUrl);
+    const dataArray = [];
+    let finished = false;
+    async.until(function () {
+        return finished;
+    }, function (callback) {
+        kongGet(pagingUrl, function (err, result) {
+            if (err)
+                return callback(err);
+            if (!result.data)
+                return callback(new Error(`kongGet(${pagingUrl}) did not receive "data" property`));
+            for (let d of result.data)
+                dataArray.push(d);
+            // console.log(result.data);
+            if (result.next) {
+                pagingUrl = `${result.next}&size=${size}`;
+            } else {
+                finished = true;
+            }
+            return callback(null);
+        })
+    }, function (err) {
+        if (err)
+            return callback(err);
+        return callback(null, {
+            data: dataArray,
+            next: null
+        });
+    });
+}
+
 function kongPost(url, body, callback) {
     kongAction('POST', url, body, 201, callback);
 };
@@ -804,7 +842,7 @@ export function kongDeleteApiPlugin(apiId: string, pluginId: string, callback: E
 
 // Consumer functions
 export function kongGetAllConsumers(callback: Callback<KongCollection<KongConsumer>>): void {
-    kongGet('consumers?size=100000', callback);
+    kongPagingGet('consumers', callback);
 }
 
 export function kongGetConsumersByCustomId(customId: string, callback: Callback<KongCollection<KongConsumer>>): void {
