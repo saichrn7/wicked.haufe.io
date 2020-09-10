@@ -305,7 +305,8 @@ function kongPagingGet(url: string, callback: Callback<any>) {
         pagingUrl = `${url}&size=${size}`;
     else
         pagingUrl = `${url}?size=${size}`;
-    console.log(pagingUrl);
+    // console.log(pagingUrl);
+    debug(pagingUrl)
     const dataArray = [];
     let finished = false;
     async.until(function () {
@@ -320,7 +321,7 @@ function kongPagingGet(url: string, callback: Callback<any>) {
                 dataArray.push(d);
             // console.log(result.data);
             if (result.next) {
-                pagingUrl = `${result.next}&size=${size}`;
+                pagingUrl = `${result.next}`;
             } else {
                 finished = true;
             }
