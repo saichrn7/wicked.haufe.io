@@ -321,7 +321,8 @@ function kongPagingGet(url: string, callback: Callback<any>) {
                 dataArray.push(d);
             // console.log(result.data);
             if (result.next) {
-                pagingUrl = `${result.next}`;
+            // Replace first / from pagingUrl as it gets added in kongAction function
+                pagingUrl = `${result.next.replace('\/','')}&size=${size}`;
             } else {
                 finished = true;
             }
