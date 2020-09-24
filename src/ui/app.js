@@ -1,6 +1,7 @@
 'use strict';
 
 /* global app, __dirname */
+const proxy = require('express-http-proxy');
 
 const express = require('express');
 const { debug, info, warn, error } = require('portal-env').Logger('portal:app');
@@ -64,7 +65,10 @@ app.use('/assets/jsgrid', express.static(path.join(__dirname, 'node_modules/jsgr
 app.use('/assets/highlight', express.static(path.join(__dirname, 'node_modules/highlight.js/lib')));
 app.use('/assets/highlight/css', express.static(path.join(__dirname, 'node_modules/highlight.js/styles')));
 app.use('/assets/marked', express.static(path.join(__dirname, 'node_modules/marked')));
-
+app.use(
+  '/assets/jquery-ui',
+  express.static(path.join(__dirname, 'node_modules/jquery-ui-dist')),
+);
 // Initializing state
 app.use('/ping', ping);
 app.use(function (req, res, next) {
@@ -168,7 +172,12 @@ app.initialize = function (done) {
     app.get('/', index);
     app.use('/apis', apis);
     app.use('/applications', applications);
-
+    // -- CLARIVATE HOOK
+    app.use('/clarivate', proxy(app.portalGlobals.network.clarivateUrl,{
+        proxyReqPathResolver: (req) => {
+            return '/clarivate'+req.url;
+        }
+    }));
     app.get('/contact', function (req, res, next) { res.redirect('/content/contact'); });
     app.use('/content', content);
     app.use('/users', users);
