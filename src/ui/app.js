@@ -1,8 +1,7 @@
 'use strict';
 
 /* global app, __dirname */
-const proxy = require("express-http-proxy");
-
+const proxy = require('express-http-proxy');
 const express = require('express');
 const { debug, info, warn, error } = require('portal-env').Logger('portal:app');
 const path = require('path');
@@ -65,7 +64,10 @@ app.use('/assets/jsgrid', express.static(path.join(__dirname, 'node_modules/jsgr
 app.use('/assets/highlight', express.static(path.join(__dirname, 'node_modules/highlight.js/lib')));
 app.use('/assets/highlight/css', express.static(path.join(__dirname, 'node_modules/highlight.js/styles')));
 app.use('/assets/marked', express.static(path.join(__dirname, 'node_modules/marked')));
-app.use('/assets/jquery-ui', express.static(path.join(__dirname, 'node_modules/jquery-ui-dist')));
+app.use(
+  '/assets/jquery-ui',
+  express.static(path.join(__dirname, 'node_modules/jquery-ui-dist')),
+);
 
 // Initializing state
 app.use('/ping', ping);
