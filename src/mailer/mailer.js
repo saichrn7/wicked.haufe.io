@@ -161,6 +161,8 @@ mailer.handleEvent = function (app, event, done) {
 
                 if(event.data.group){
                     subject = subject + ' - ' + event.data.group;
+                } else {
+                    subject = subject + ' - ' + event.data.apiId;
                 }
                 
                 const email = {
