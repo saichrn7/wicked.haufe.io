@@ -116,6 +116,8 @@ function checkConfigHash(callback) {
                 // The instance which wrote the config hash is the same version as this instance, or even a newer
                 // one. We will cave in and force quite now to see what happens next.
                 forceQuit = true;
+            } else if (persistedConfigHash.aliveDate < nowUtc) {
+                forceQuit = true;
             }
 
             if (forceQuit) {
