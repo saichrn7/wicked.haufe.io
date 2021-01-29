@@ -27,7 +27,7 @@ principal.initialElection = () => {
         setTimeout(principal.initialElection, 500);
     }
     electPrincipal();
-    setInterval(houseKeeping, ELECTION_INTERVAL * 1000);
+    setInterval(electPrincipal, ELECTION_INTERVAL * 1000);
 };
 
 function houseKeeping() {
@@ -115,8 +115,6 @@ function checkConfigHash(callback) {
             } else if (semver.gte(persistedConfigHash.version, utils.getVersion())) {
                 // The instance which wrote the config hash is the same version as this instance, or even a newer
                 // one. We will cave in and force quite now to see what happens next.
-                forceQuit = true;
-            } else if (persistedConfigHash.aliveDate < nowUtc) {
                 forceQuit = true;
             }
 
