@@ -27,7 +27,7 @@ principal.initialElection = () => {
         setTimeout(principal.initialElection, 500);
     }
     electPrincipal();
-    setInterval(electPrincipal, ELECTION_INTERVAL * 1000);
+    setInterval(houseKeeping, ELECTION_INTERVAL * 1000);
 };
 
 function houseKeeping() {
