@@ -248,21 +248,11 @@ function kongAction(method, inputUrl, body, expectedStatusCode, callback: Callba
 
     // Now do our thing
     const kongUrl = getKongUrl();
-
     const methodBody: any = {
         method: method,
         url: kongUrl + url,
         timeout: KONG_TIMEOUT
     };
-
-    // To keep second kong cluster db in sync
-    const kongUrl2 = process.env.SECOND_KONG_ADMIN;
-    const methodBody2: any = {
-        method: method,
-        url: kongUrl2 + url,
-        timeout: KONG_TIMEOUT
-    };
-
     if (method != 'DELETE' &&
         method != 'GET') {
         methodBody.json = true;
@@ -304,45 +294,7 @@ function kongAction(method, inputUrl, body, expectedStatusCode, callback: Callba
         });
     }
 
-    function tryRequest2(attempt: number) {
-        debug("Inside Second Kong Admin Call");
-        request(methodBody2, function (err, apiResponse, apiBody) {
-            if (err) {
-                if (attempt > KONG_MAX_ATTEMPTS) {
-                    error(`kongAction: Giving up after ${KONG_MAX_ATTEMPTS} attempts to send a request to Kong.`);
-                    // Still open up calls to Kong again now. Otherwise we would get stuck
-                    // in a deadlock loop.
-                    _kongAvailable = true;
-                    return callback(err);
-                }
-                warn(`kongAction: Failed to send a request to Kong Admin 2; retrying in ${KONG_RETRY_DELAY} ms (#${attempt+1}). Preventing other calls in the mean time.`);
-                _kongAvailable = false;
-
-                setTimeout(tryRequest2, KONG_RETRY_DELAY, attempt + 1);
-                return;
-            }
-            _kongAvailable = true;
-            if (expectedStatusCode != apiResponse.statusCode) {
-                const err: any = new Error('kongAction ' + method + ' on kongURL2:' + url + ' did not return the expected status code (got: ' + apiResponse.statusCode + ', expected: ' + expectedStatusCode + ').');
-                err.status = apiResponse.statusCode;
-                debug(method + ' /' + url);
-                debug(methodBody);
-                debug(apiBody);
-                //console.error(apiBody);
-                return callback(err);
-            }
-            callback(null, getJson(apiBody));
-        });
-    }
-
-
-    
     tryRequest(0);
-    if(process.env.SECOND_KONG_ADMIN)
-     { 
-        debug("Calling Second Kong Admin");
-        tryRequest2(0)
-     }
 }
 
 function kongGet(url: string, callback: Callback<any>) {
