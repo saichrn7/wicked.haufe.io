@@ -397,6 +397,7 @@ export function _initMachineUser(serviceId: string, callback?: ErrorCallback): v
     if (!callback) {
         return new Promise(function (resolve, reject) {
             func(serviceId, function (err) {
+                // @ts-ignore
                 err ? reject(err) : resolve();
             });
         });
