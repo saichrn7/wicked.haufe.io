@@ -1,6 +1,7 @@
 'use strict';
 
 const express = require('express');
+const pluginUtils = require('../pluginUtils');
 const router = express.Router();
 const { debug, info, warn, error } = require('portal-env').Logger('kickstarter:api:envs');
 
@@ -54,6 +55,9 @@ router.post('/:envId', function (req, res, next) {
             env[name] = {};
         env[name].value = value;
         env[name].encrypted = encrypted;
+        if(name.includes('CORS_METHOD') || name.includes('CORS_HEADERS') || name.includes('CORS_EXPOSE_HEADERS')) {
+            env[name].value = pluginUtils.fixCorsArray(value)
+        }
         utils.saveEnvDict(req.app, envVars, envId);
 
         res.status(200).json({ status: 200, message: 'OK' });
