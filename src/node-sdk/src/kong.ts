@@ -149,7 +149,9 @@ export function kongApiToServiceAndRoutes(api: KongApi): { service: KongService,
             if (item.methods && item.methods.length) {
                 route.methods = item.methods;
             }
-
+            if(item.name) {
+                route.name = item.name
+            }
             routes.push(route);
         }
     }

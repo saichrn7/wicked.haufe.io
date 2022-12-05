@@ -61,7 +61,8 @@ export interface KongRoute {
     preserve_host: boolean,
     service: {
         id: string
-    }
+    },
+    name?: string
 }
 
 export interface KongPlugin {

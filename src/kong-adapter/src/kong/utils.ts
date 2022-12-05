@@ -660,6 +660,55 @@ export function kongPostApi(apiConfig: KongApi, callback: Callback<KongApi>): vo
     //kongPost('apis', apiConfig, callback);
 }
 
+// adding patch api changes 
+
+function  processNewRouteMethod(routes:KongRoute[],existingRoutes:KongRoute[],service) {
+    
+    let routesToBeDeleted = []
+
+    debug(`kong new routes processing, both got names(${service.id})`);
+    for (let i = 0; i < routes.length; i += 1) {
+        debug(`setting the route service id(${service.id})`);
+        routes[i].service = {
+            id: service.id
+        };
+        //kong has name,portal has name
+        //get the route id with this name and assign it to portal route latest data
+        let foundRoute = false
+        for(let j=0;j<existingRoutes.length;j+=1) {
+            if(routes[i].name == existingRoutes[j].name) {
+                   debug(`found the existing route with route id ---> (${existingRoutes[j].id})------->and service name -------->(${service.id})--->updating it`);
+                   foundRoute =true
+                   routes[i].id = existingRoutes[j].id
+            }
+        }
+        if(!foundRoute) {
+            debug(`not found route with name ---> (${routes[i].name})------->and service name -------->(${service.id})------->adding it`);
+            delete routes[i].id;
+        }
+    }
+
+    //now check the routes which are their in kong and not present in portal
+
+    for(let j=0;j<existingRoutes.length;j+=1) {
+        let shudDelete = true
+        for (let i = 0; i < routes.length; i += 1) {
+            if(existingRoutes[j].name == routes[i].name) {
+                shudDelete = false
+            }
+        }
+
+        if(shudDelete) {
+            routesToBeDeleted.push(existingRoutes[j].id)
+        }
+    }
+    
+    debug(`routes to be deleted is -----------> ${routesToBeDeleted}----->services name--------->${service.id}`);
+    return routesToBeDeleted;
+
+}
+
+
 export function kongPatchApi(apiId: string, apiConfig: KongApi, callback: Callback<KongApi>): void {
     debug(`kongPatchApi(${apiId})`);
     debug('apiConfig: ' + JSON.stringify(apiConfig, null, 2));
@@ -667,9 +716,9 @@ export function kongPatchApi(apiId: string, apiConfig: KongApi, callback: Callba
     const { service, routes } = wicked.kongApiToServiceAndRoutes(apiConfig);
     let persistedService: KongService = null;
     let persistedRoute: KongRoute[] = [];
-
+    let routesToDelete = []
     service.id = apiId;
-
+    let route_enabled = false
     kongGetRouteForService(apiId, function (err, existingRoutes: KongRoute[]) {
         if (err)
             return err;
@@ -681,7 +730,9 @@ export function kongPatchApi(apiId: string, apiConfig: KongApi, callback: Callba
         debug('Existing Routes: ' + JSON.stringify(existingRoutes, null, 2));
 
         let flow: ((...args: any[]) => void)[] = [];
-
+        if (routes && routes[0].name && existingRoutes && existingRoutes[0].name) {
+            route_enabled = true
+        }
         flow.push(
             function (callback) {
                 kongPatchService(apiId, service, callback)
@@ -689,15 +740,23 @@ export function kongPatchApi(apiId: string, apiConfig: KongApi, callback: Callba
             function (service: KongService, callback) {
                 persistedService = service;
 
+            if (route_enabled) {
+                //process my code
+                routesToDelete = processNewRouteMethod(routes, existingRoutes, persistedService)
+            } else {
                 // update service id
                 // there is no way to correctly identify route(s) unless we allocate route id in static config ( not there yet )
                 // so we completly replace content of the route(s) and delete whatever else left
                 for (let i = 0; i < routes.length; i += 1) {
                     routes[i].service = { id: service.id };
                     routes[i].id = existingRoutes && existingRoutes.length > i ? existingRoutes[i].id : null;
+                    if (routes[i].id == null) {
+                        delete routes[i].id
+                    }
                 }
+            }
 
-                callback(null, 0, routes);
+            callback(null, 0, routes);
             }
         );
 
@@ -744,6 +803,32 @@ export function kongPatchApi(apiId: string, apiConfig: KongApi, callback: Callba
                 }
             );
         };
+
+        if (route_enabled) {
+            debug(`named plugin deletes activated..`);
+            flow.push(function(index, callRoutes, callback) {
+                debug(`got deletes.....` + routesToDelete);
+                if (routesToDelete.length > 0) {
+                    for (let i = 0; i < routesToDelete.length; i += 1) {
+                        debug(`delete route: ${i} : ${routesToDelete[i]}`);
+
+                        //get the deleted route plugins
+                        //delete those
+                        //delete route
+                        kongDeleteRoute(routesToDelete[i], function(err) {
+                            if (err) {
+                                return callback(err);
+                            }
+                            if (i + 1 >= routesToDelete.length) {
+                                routesToDelete = []
+                                return callback(null);
+                            }
+                        });
+                    }
+                }
+                return callback(null, index, callRoutes)
+            })
+        }
 
         // delete whatever left
         for (let i = routes.length; existingRoutes && i < existingRoutes.length; i += 1) {
