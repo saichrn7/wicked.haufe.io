@@ -321,8 +321,27 @@ function assemblePluginTodoLists(portalApi: ApiDescription, kongApi: KongApiConf
 
     const handledKongPlugins = {};
     for (let i = 0; i < portalApi.config.plugins.length; ++i) {
+        let routePlugingsEnabled = portalApi.config.api.routes[0].name ? true :false
         let portalPlugin = portalApi.config.plugins[i];
-        let kongPluginIndex = utils.getIndexBy(kongApi.plugins, function (plugin) { return plugin.name == portalPlugin.name; });
+        let route_id = 0;
+        if(routePlugingsEnabled) {
+            //get the route name of config
+            let route_name = portalPlugin.route ? portalPlugin.route.name : null
+            route_id = route_name ? getRouteIdfromName(route_name,kongApi.api.routes) : 0    
+            console.log('processing data...'+route_name+'id is.....'+route_id)     
+
+        }
+        let kongPluginIndex = -1;
+        if(route_id != 0) {
+            // kong route plugins enabled..lets check if its there in kong or not
+            //if not..lets add it else update it..
+            console.log('checking route id with plugin started...')
+            kongPluginIndex = utils.getIndexBy(kongApi.plugins, function (plugin) { return plugin.name == portalPlugin.name && plugin.route && plugin.route.id && plugin.route.id == route_id ;});
+            console.log('checking route id done...',kongPluginIndex)
+        } else  {
+             //we dont have route id..so its a service level plugin.search for it,It shud not have route config because we are taking service level plugins
+             kongPluginIndex = utils.getIndexBy(kongApi.plugins, function (plugin) { return plugin.name == portalPlugin.name && !plugin.route });
+        }
         if (kongPluginIndex < 0) {
             addList.push({
                 portalApi: portalApi,
@@ -339,14 +358,15 @@ function assemblePluginTodoLists(portalApi: ApiDescription, kongApi: KongApiConf
                     kongPlugin: kongPlugin
                 });
             } // Else: Matches, all is good
-            handledKongPlugins[kongPlugin.name] = true;
+            //we have to use id as identifier because plugin name is no longer unique key as we can have same plugin for different routes and with service also
+            handledKongPlugins[kongPlugin.id] = true;
         }
     }
 
     // Mop up needed?
     for (let i = 0; i < kongApi.plugins.length; ++i) {
         let kongPlugin = kongApi.plugins[i];
-        if (!handledKongPlugins[kongPlugin.name] && !shouldIgnore(kongPlugin.name)) {
+        if (!handledKongPlugins[kongPlugin.id] && !shouldIgnore(kongPlugin.name)) {
             deleteList.push({
                 kongApi: kongApi,
                 kongPlugin: kongPlugin
@@ -465,4 +485,16 @@ function assembleConsumerApiPluginsTodoLists(portalConsumer: ConsumerInfo, kongC
         patchList: patchList,
         deleteList: deleteList
     };
+}
+
+function getRouteIdfromName(route_name : any ,kong_routes : any ) {
+
+    for (let i = 0; i < kong_routes.length; ++i) {
+        let route_elem = kong_routes[i]
+        if(route_elem.name && route_name == route_elem.name) {
+            return route_elem.id
+        }
+    }
+
+    return 0
 }
