@@ -75,6 +75,7 @@ export interface KongPlugin {
     },
     route?: {
         id: string
+        name?: string
     },
     consumer?: {
         id: string
