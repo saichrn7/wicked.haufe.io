@@ -1,0 +1,29 @@
+extends layout
+
+
+block content
+  .jumbotron
+    .container
+      h1 Kong Sample Plugins Configs
+  
+  .container
+
+    .panel.panel-default
+      .panel-heading
+        h4.panel-title Plugin configurations
+        
+      .panel-body
+        p.
+          The below are the sample kong plugin configurations:
+        table.table.table-striped
+          thead
+            tr
+              th Plugin Name
+              th Description
+              th sample-config
+          tbody
+              each p_elem in p_data
+                tr 
+                  td=p_elem.name 
+                  td=p_elem.description
+                  td=JSON.stringify(p_elem.config,null,4)

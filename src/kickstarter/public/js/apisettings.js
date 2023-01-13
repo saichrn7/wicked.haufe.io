@@ -150,6 +150,11 @@ Vue.component('wicked-api', {
 
 Vue.component('wicked-api-kong', {
     props: ['value', 'envPrefix'],
+    methods: {
+        emitRouteObjChanges : function(upDatedRoutesData) {
+            this.$emit('route-changes-event', upDatedRoutesData);
+        }
+    }, 
     template: `
     <wicked-panel :open=true title="Kong (Gateway) Configuration" type="primary">
         <wicked-input v-model="value.api.host" label="API Host:" hint="API Host, it could be alternate DNS for the service" :env-var="envPrefix + 'HOST'" />
@@ -162,7 +167,7 @@ Vue.component('wicked-api-kong', {
           <wicked-input v-model="value.api.read_timeout" number="true" label="Read timeout:" hint="The timeout in milliseconds between two successive read operations for transmitting a request to the upstream server. Defaults to <code>60000</code>" />
         </wicked-panel>
 
-        <wicked-routes v-model="value.api.routes"/>
+        <wicked-routes v-on:input="emitRouteObjChanges" v-model="value.api"/>
     </wicked-panel>
 `
 });
@@ -199,15 +204,21 @@ Vue.component('wicked-api-swagger', {
 
 const vm = new Vue({
     el: '#vueBase',
-    data: injectedData
+    data: injectedData,
+    methods : {
+        refreshPluginSection : function(updatedRoutesData) {
+           console.log('taking the updated routes from routeData Chang event')
+           this.$refs.apiPluginComponent.updateRoutes(updatedRoutesData)
+        }
+    }
 });
 
 function isValidURL(uri) {
-    var res = uri.match(/^((((http|https|ws|wss):(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
-    if (res == null)
-        return false;
-    else
-        return true;
+  var res = uri.match(/^((((http|https|ws|wss):(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/g);
+  if (res == null)
+    return false;
+  else
+    return true;
 };
 
 function isNumeric(value) {
@@ -215,90 +226,120 @@ function isNumeric(value) {
 }
 
 function validateData(callback) {
-    let data = vm.$data;
-    let error = '';
+  let data = vm.$data;
+  let error = '';
 
-    //validate URI, most common errors we see
-    let token = data.config.api.upstream_url;
-    if (!isValidURL(token)) {
-        error = error + '\nInvalid Upstream (backend) URL: ' + token;
+  //validate URI, most common errors we see
+  let token = data.config.api.upstream_url;
+  if (!isValidURL(token)) {
+     error = error + '\nInvalid Upstream (backend) URL: ' + token;
+  }
+
+  //validate Service
+  token = data.config.api.retries;
+  if( token && !isNumeric(token) ) {
+     error = error + '\nInvalid Retries: ' + token + ', must empty for default or Integer';
+  }
+
+  token = data.config.api.connect_timeout;
+  if( token && !isNumeric(token) ) {
+     error = error + '\nInvalid Connect timeout: ' + token + ', must empty for default or Integer';
+  }
+
+  token = data.config.api.write_timeout;
+  if( token && !isNumeric(token) ) {
+     error = error + '\nInvalid Write timeout: ' + token + ', must empty for default or Integer';
+  }
+
+  token = data.config.api.read_timeout;
+  if( token && !isNumeric(token) ) {
+     error = error + '\nInvalid Read timeout: ' + token + ', must empty for default or Integer';
+  }
+
+  //normalize Route(s) tokens
+  for(let i = 0; i < data.config.api.routes.length; i += 1) {
+    const route = data.config.api.routes[i];
+
+    //method aka Verb is UPPERCASED
+    if ( route.methods ) {
+        route.methods = route.methods.map( e => e.toUpperCase() );
     }
 
-    //validate Service
-    token = data.config.api.retries;
-    if( token && !isNumeric(token) ) {
-        error = error + '\nInvalid Retries: ' + token + ', must empty for default or Integer';
+    //protocol aka Schema is lowercased
+    if ( route.protocols ) {
+        route.protocols = route.protocols.map( e => e.toLowerCase() );
     }
+  }
 
-    token = data.config.api.connect_timeout;
-    if( token && !isNumeric(token) ) {
-        error = error + '\nInvalid Connect timeout: ' + token + ', must empty for default or Integer';
+  //validate Route(s)
+  for(let i = 0; i < data.config.api.routes.length; i += 1) {
+    const route = data.config.api.routes[i];
+    const methods = route.methods ? route.methods.filter( e => !!e ) : [];
+    const paths = route.paths ? route.paths.filter( e => !!e ) : [];
+    const hosts = route.hosts ? route.hosts.filter( e => !!e ) : [];
+
+    if ( !methods.length && !paths.length && !hosts.length ) {
+        error = error + '\nInvalid Route #' + (i + 1) + '. At least one of hosts, paths or methods must be set.';
     }
+  }
 
-    token = data.config.api.write_timeout;
-    if( token && !isNumeric(token) ) {
-        error = error + '\nInvalid Write timeout: ' + token + ', must empty for default or Integer';
-    }
-
-    token = data.config.api.read_timeout;
-    if( token && !isNumeric(token) ) {
-        error = error + '\nInvalid Read timeout: ' + token + ', must empty for default or Integer';
-    }
-
-    //normalize Route(s) tokens
-    for(let i = 0; i < data.config.api.routes.length; i += 1) {
-        const route = data.config.api.routes[i];
-
-        //method aka Verb is UPPERCASED
-        if ( route.methods ) {
-            route.methods = route.methods.map( e => e.toUpperCase() );
-        }
-
-        //protocol aka Schema is lowercased
-        if ( route.protocols ) {
-            route.protocols = route.protocols.map( e => e.toLowerCase() );
-        }
-
-        //remove empty arrays, per kong spec, no value should be provided
-        if (route.methods && route.methods.length === 0) {
-            delete route.methods;
-        }
-
-        if (route.paths && route.paths.length === 0) {
-            delete route.paths;
-        }
-
-        if (route.hosts && route.hosts.length === 0) {
-            delete route.hosts;
-        }
-    }
-
-    //validate Route(s)
-    for(let i = 0; i < data.config.api.routes.length; i += 1) {
-        const route = data.config.api.routes[i];
-        const methods = route.methods ? route.methods.filter( e => !!e ) : [];
-        const paths = route.paths ? route.paths.filter( e => !!e ) : [];
-        const hosts = route.hosts ? route.hosts.filter( e => !!e ) : [];
-
-        if ( !methods.length && !paths.length && !hosts.length ) {
-            error = error + '\nInvalid Route #' + (i + 1) + '. At least one of hosts, paths or methods must be set.';
-        }
-    }
-
-    if ( error ) {
-        return callback(null, error);
-    }
-    else {
-        return callback(JSON.stringify(data), null);
-    }
+  if ( error ) {
+      return callback(null, error);
+  }
+  else {
+      return callback(JSON.stringify(data), null);
+  }
 };
 
 function storeData() {
     const apiId = vm.api.id;
-
+    // plugin changes start 
+    let service_plugins = JSON.parse(JSON.stringify(vm.$refs.apiPluginComponent.service_plugins.plugin_data))
+    if(service_plugins && service_plugins.length > 0) {
+        const oth_index = service_plugins.findIndex(element => element.name === "other-plugins");
+        if(oth_index !== -1) {
+        let oth_plugin_data = service_plugins[oth_index]
+        service_plugins.splice(oth_index, 1);
+        for (let i = 0; i < oth_plugin_data.config.length; i++) {
+            service_plugins.push(oth_plugin_data.config[i])
+        }
+        }
+        vm.$data.config.plugins = service_plugins
+    }
+    let route_plugins_data = vm.$refs.apiPluginComponent.routes_plugins
+    let configured_routes = vm.$data.config.api.routes
+    if(vm.$data.config.api.enable_routes) {
+        for(let key in route_plugins_data) {
+            for(let j=0;j<configured_routes.length;j++) {
+                let route_elem = configured_routes[j]
+                if(key == route_elem.name) {
+                    let r_level_plugin = JSON.parse(JSON.stringify(route_plugins_data[key].plugin_data))
+                    const oth_index = r_level_plugin.findIndex(element => element.name === "other-plugins");
+                    if(oth_index !== -1) {
+                        let oth_plugin_data = r_level_plugin[oth_index]
+                        r_level_plugin.splice(oth_index, 1);
+                        for (let i = 0; i < oth_plugin_data.config.length; i++) {
+                            r_level_plugin.push(oth_plugin_data.config[i])
+                        }
+                    }
+                    configured_routes[j].plugins = r_level_plugin
+                }
+        }
+    }
+   }
+    if(!vm.$data.config.api.enable_routes) {
+        for(let j=0;j<configured_routes.length;j++) {
+            delete configured_routes[j].plugins     
+        }
+    }
+    vm.$data.config.api.routes = configured_routes
+    console.log('----finalized api data after route processing------')
+    console.log(JSON.stringify(vm.$data.config))
+    console.log('---------------------------------------------------')
+    //plugin changes end 
     validateData( function(data, error) {
         if( error ) {
-            alert('Error validating data:\n' + error);
+          alert('Error validating data:\n' + error);
         }
         else if( !error && data ) {
             $.post({
@@ -308,10 +349,12 @@ function storeData() {
             }).fail(function () {
                 alert('Could not store data, an error occurred.');
             }).done(function (data) {
-                if (data.message == 'OK')
+                if (data.message == 'OK') {
                     alert('Successfully stored data.');
-                else
+                }
+                else {
                     alert('The data was stored, but the backend returned the following message:\n\n' + data.message);
+                }
             });
         }
     });
