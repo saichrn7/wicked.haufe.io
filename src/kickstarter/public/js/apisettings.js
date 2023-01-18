@@ -291,48 +291,60 @@ function validateData(callback) {
   }
 };
 
-function storeData() {
-    const apiId = vm.api.id;
-    // plugin changes start 
+function processServicePlugins() {
     let service_plugins = JSON.parse(JSON.stringify(vm.$refs.apiPluginComponent.service_plugins.plugin_data))
     if(service_plugins && service_plugins.length > 0) {
         const oth_index = service_plugins.findIndex(element => element.name === "other-plugins");
         if(oth_index !== -1) {
-        let oth_plugin_data = service_plugins[oth_index]
-        service_plugins.splice(oth_index, 1);
-        for (let i = 0; i < oth_plugin_data.config.length; i++) {
-            service_plugins.push(oth_plugin_data.config[i])
-        }
+            let oth_plugin_data = service_plugins[oth_index]
+            service_plugins.splice(oth_index, 1);
+            for (let i = 0; i < oth_plugin_data.config.length; i++) {
+                service_plugins.push(oth_plugin_data.config[i])
+            }
         }
         vm.$data.config.plugins = service_plugins
     }
-    let route_plugins_data = vm.$refs.apiPluginComponent.routes_plugins
-    let configured_routes = vm.$data.config.api.routes
-    if(vm.$data.config.api.enable_routes) {
-        for(let key in route_plugins_data) {
-            for(let j=0;j<configured_routes.length;j++) {
-                let route_elem = configured_routes[j]
-                if(key == route_elem.name) {
-                    let r_level_plugin = JSON.parse(JSON.stringify(route_plugins_data[key].plugin_data))
-                    const oth_index = r_level_plugin.findIndex(element => element.name === "other-plugins");
-                    if(oth_index !== -1) {
-                        let oth_plugin_data = r_level_plugin[oth_index]
-                        r_level_plugin.splice(oth_index, 1);
-                        for (let i = 0; i < oth_plugin_data.config.length; i++) {
-                            r_level_plugin.push(oth_plugin_data.config[i])
-                        }
-                    }
-                    configured_routes[j].plugins = r_level_plugin
-                }
-        }
+}
+
+function processRouteLevelPlugins() {
+
+    let routePluginsData = vm.$refs.apiPluginComponent.routes_plugins
+    let configuredRoutes = vm.$data.config.api.routes
+    let enableRoutes = vm.$data.config.api.enable_routes
+
+    if (!enableRoutes) {
+        configuredRoutes.forEach((route) => {
+            delete route.plugins;
+        });
+        return configuredRoutes;
     }
-   }
-    if(!vm.$data.config.api.enable_routes) {
-        for(let j=0;j<configured_routes.length;j++) {
-            delete configured_routes[j].plugins     
+
+    Object.keys(routePluginsData).forEach((routeName) => {
+        const route = configuredRoutes.find((r) => r.name === routeName);
+        if (!route) {
+            return;
         }
-    }
-    vm.$data.config.api.routes = configured_routes
+        let rLevelPlugin = JSON.parse(JSON.stringify(routePluginsData[routeName].plugin_data));
+        const otherPluginsIndex = rLevelPlugin.findIndex((element) => element.name === "other-plugins");
+        if (otherPluginsIndex !== -1) {
+            const otherPluginData = rLevelPlugin[otherPluginsIndex];
+            rLevelPlugin.splice(otherPluginsIndex, 1);
+            otherPluginData.config.forEach((config) => {
+                rLevelPlugin.push(config);
+            });
+        }
+        route.plugins = rLevelPlugin;
+    });
+
+    return configuredRoutes;
+}
+
+function storeData() {
+    const apiId = vm.api.id;
+    // plugin changes start 
+    processServicePlugins()
+    vm.$data.config.api.routes = processRouteLevelPlugins()
+    //plugin changes end
     console.log('----finalized api data after route processing------')
     console.log(JSON.stringify(vm.$data.config))
     console.log('---------------------------------------------------')
@@ -351,6 +363,9 @@ function storeData() {
             }).done(function (data) {
                 if (data.message == 'OK') {
                     alert('Successfully stored data.');
+                }
+                else if(data.message=='invalid plugins') {
+                    alert('Could not store data because of following error\n'+JSON.stringify(data.errors, null, 2));
                 }
                 else {
                     alert('The data was stored, but the backend returned the following message:\n\n' + data.message);

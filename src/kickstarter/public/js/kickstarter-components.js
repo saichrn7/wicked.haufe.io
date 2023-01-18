@@ -712,13 +712,13 @@ Vue.component('wicked-plugins', {
             }
             this.routes_plugins[route_name].plugin_data.push(plugin_body)
         } else {
-            this.routes_plugins[route_name].active_plugins[plugin_name] = false
-            for(let i=0;i< this.routes_plugins[route_name].plugin_data.length ; ++i) {
-                let data = this.routes_plugins[route_name].plugin_data[i]
-                if(plugin_name==data.name) {
-                    this.routes_plugins[route_name].plugin_data.splice(i, 1);
+                this.routes_plugins[route_name].active_plugins[plugin_name] = false
+                for(let i=0;i< this.routes_plugins[route_name].plugin_data.length ; ++i) {
+                    let data = this.routes_plugins[route_name].plugin_data[i]
+                    if(plugin_name==data.name) {
+                        this.routes_plugins[route_name].plugin_data.splice(i, 1);
+                    }
                 }
-            }
         }
         this.$forceUpdate();
        },
@@ -735,56 +735,54 @@ Vue.component('wicked-plugins', {
            this.service_plugins.plugin_data.push(plugin_body)
 
         } else {
-            this.service_plugins.active_plugins[plugin_name] = false
-            for(let i=0;i< this.service_plugins.plugin_data.length ; ++i) {
-                let data = this.service_plugins.plugin_data[i]
-                if(plugin_name==data.name) {
-                    this.service_plugins.plugin_data.splice(i, 1);
+                this.service_plugins.active_plugins[plugin_name] = false
+                for(let i=0;i< this.service_plugins.plugin_data.length ; ++i) {
+                    let data = this.service_plugins.plugin_data[i]
+                    if(plugin_name==data.name) {
+                        this.service_plugins.plugin_data.splice(i, 1);
+                    }
                 }
-            }
         }
         this.$forceUpdate();
        },
        updatePluginValue : function(event,plugin_name,route_name) {
-          let event_data =null
-          try {
-            event_data = JSON.parse(event.target.value)
-          } catch (e){
-            alert('invalid json format added in route plugin config--'+route_name+'---'+plugin_name)
-          }
-          let p_data = this.routes_plugins[route_name].plugin_data
-          for(let i=0;i<p_data.length;++i) {
-            if(plugin_name==p_data[i].name){
-                if(plugin_name != 'other-plugins') {
-                   p_data[i] = {name:plugin_name,config:event_data.config} 
-                } else  {
-                   p_data[i] = {name:plugin_name,config:event_data}   
-                }
+        try {
+            let event_data = JSON.parse(event.target.value)
+            let p_data = this.routes_plugins[route_name].plugin_data
+            for(let i=0;i<p_data.length;++i) {
+                if(plugin_name==p_data[i].name){
+                    if(plugin_name != 'other-plugins') {
+                    p_data[i] = {name:plugin_name,config:event_data.config} 
+                    } else  {
+                    p_data[i] = {name:plugin_name,config:event_data}   
+                    }
 
+                }
             }
-          }
-          this.routes_plugins[route_name].plugin_data = p_data
+            this.routes_plugins[route_name].plugin_data = p_data
+        } catch(err) {
+            alert("Warning! Plugin " + plugin_name + "under route " + route_name + " changes will not be saved because of invalid json format")
+        }
        },
        updateServicePluginValue : function(event,service_plugin_config) {
-        let event_data =null
         try {
-          event_data = JSON.parse(event.target.value)
-        } catch (e){
-          alert('invalid json format added in service plugin config--'+service_plugin_config.name)
-        }
-        let p_data = this.service_plugins.plugin_data
-        for(let i=0;i<p_data.length;++i) {
-          if(service_plugin_config.name==p_data[i].name){
-             if(service_plugin_config.name != 'other-plugins') {
-                p_data[i] = {name:service_plugin_config.name,config:event_data.config} 
-             } else  {
-                p_data[i] = {name:service_plugin_config.name,config:event_data}   
-             }
+            let event_data = JSON.parse(event.target.value)
+            let p_data = this.service_plugins.plugin_data
+            for(let i=0;i<p_data.length;++i) {
+                if(service_plugin_config.name==p_data[i].name){
+                    if(service_plugin_config.name != 'other-plugins') {
+                        p_data[i] = {name:service_plugin_config.name,config:event_data.config} 
+                    } else  {
+                        p_data[i] = {name:service_plugin_config.name,config:event_data}   
+                    }
 
-          }
+                }
+            }
+            this.service_plugins.plugin_data = p_data
+        } catch(err) {
+           alert("Warning! Service plugin "+service_plugin_config.name +" changes will not be saved because of invalid json format")
         }
-        this.service_plugins.plugin_data = p_data
-     }
+    }
     },
     template: `
         <wicked-panel title="Plugin Configurations" type="primary" :open=true>

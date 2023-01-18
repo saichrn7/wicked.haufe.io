@@ -25,7 +25,7 @@ router.post('/', function (req, res, next) {
 
 //get help page
 router.get('/plugindocs', function (req, res) {
-    const plugin_doc = JSON.parse(JSON.stringify(utils.getPluginSwagger()))
+    const plugin_doc = JSON.parse(JSON.stringify(utils.getPluginList()))
     for(let elem of plugin_doc.data) {
       elem.config = {name : elem.name,config:elem.config}
     }

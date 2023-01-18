@@ -214,6 +214,12 @@ router.post('/:apiId/api', function (req, res, next) {
        r.hosts = r.hosts ? r.hosts.filter(u => !!u) : r.hosts;
     });
 
+   
+        //validating service and route level plugins
+    let plugin_errors = utils.validatePluginData(config)
+    if(plugin_errors.length > 0) {
+        return res.json({errors : plugin_errors,message : "invalid plugins"})
+    }
     const kongConfig = {
         api: config.api,
         plugins: config.plugins

@@ -9,7 +9,7 @@ const mustache = require('mustache');
 const execSync = require('child_process').execSync;
 const envReader = require('portal-env');
 const { debug, info, warn, error } = require('portal-env').Logger('kickstarter:utils');
-const plugin_doc = require('./sample_plugins')
+const sample_plugins = require('./sample_plugins')
 const utils = function () { };
 
 utils.makeError = function (statusCode, errorText) {
@@ -1188,7 +1188,45 @@ utils.getVersion = function () {
     return utils._packageVersion;
 };
 
-utils.getPluginSwagger = function() {
-    return plugin_doc;
+utils.getPluginList = function() {
+    return sample_plugins;
+}
+
+
+utils.validatePluginData = function(config) {
+    let errors = []
+    let requiredFields = ['name','config']
+    let validateJson = (jsonObject, entityName) => {
+        try {
+            const validJson = JSON.parse(JSON.stringify(jsonObject));
+            // Check for missing mandatory fields
+            requiredFields.forEach(field => {
+                if (!validJson.hasOwnProperty(field)) {
+                    errors.push(`${entityName} plugin is missing mandatory field ${field} in the plugin config, please add it: ${field}`);
+                }
+            });
+             // Check for invalid fields
+            Object.keys(validJson).filter(key => !requiredFields.includes(key))
+                .forEach(key => errors.push(`Invalid field: ${key} found in the plugin -- ${validJson.name} under ${entityName}, Please remove it from configuration`));
+        } catch (e) {
+            errors.push(`Invalid plugin json structure is detected under ${entityName}, please correct it`);
+        }
+    }
+    let checkPlugins = (plugins, entityName) => {
+        plugins.forEach((plugin) => {
+         validateJson(plugin, entityName);
+        })
+    }
+    if(config.plugins && config.plugins.length > 0) {
+       checkPlugins(config.plugins, "service");
+    }
+    let route_data = config.api.routes;
+    for(let i=0;i<route_data.length;i++) {
+        let route_elem = route_data[i]
+        if(route_elem.plugins && route_elem.plugins.length > 0) {
+           checkPlugins(route_elem.plugins, "route");
+        }
+    }
+    return errors;
 }
 module.exports = utils;
