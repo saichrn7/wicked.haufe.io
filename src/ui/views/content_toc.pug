@@ -21,8 +21,112 @@ block content
       br
     br
     br
-
-    if (toc)
+      
+    
+    if (toc) && authUser
+      each cat, name in toc
+        .panel.panel-default
+          .panel-heading
+            h4.panel-title= cat.name
+          .panel-body
+            style.
+              table {
+              border-collapse: collapse;
+              border-spacing: 22;
+              width: 80%;
+              border: 1px solid #ddd;
+              padding: 40px;
+              }
+               td, tr{
+              text-align: left ;
+              border: 1px solid #ddd;
+              padding:10px;
+              word-wrap: break-word; 
+              }
+              th{
+                background-color:rgb(240, 240, 240);
+                text-align: left ;
+                border: 1px solid #ddd;
+                padding: 16px; 
+              }
+              @media(min-width: 100px) and (max-width: 249px){
+                 table {
+                  display: none;
+                 }
+              }
+               @media(min-width: 250px) and (max-width: 399px){
+              table, tr{
+                display: block;
+                width: 30%;
+                background-color:red;
+              }
+              tr{
+              margin-bottom:15px;
+              width: 30%;
+              }
+              th{
+              margin-bottom:15px;
+              width: 35%;
+              }
+              }
+              @media(min-width: 400px) and (max-width: 599px){
+              table, tr{
+                display: block;
+                width: 90%;
+              }
+              tr{
+              margin-bottom:15px;
+              width: 30%;
+              }
+              }
+              @media(min-width: 600px) and (max-width: 900px)  {
+              table, tr{
+                display: block;
+                width: 86%;
+              }
+              tr,th{
+              margin-bottom:15px;
+               width: 48%;
+              }
+              td{
+                width:48%;
+              }
+              }
+               @media(min-width: 900px)and (max-width: 950px)  {
+              table, tr{
+              display: block;
+              width: auto;
+              }
+              tr,th{
+              margin-bottom:15px;
+              width: 70%;
+              }
+              td{
+              width:78%;
+              word-wrap: break-word; 
+              }
+              }
+            if cat.name == 'APIs'
+              table  
+                    tr
+                      th APIs
+                      th Tags
+                      th Groups 
+                    each entry in cat.entries
+                      tr
+                        td 
+                          a(href=entry.url)= entry.title
+                        td 
+                          a(href=entry.url)= entry.tags
+                        td 
+                          a(href=entry.url)= entry.requiredGroup
+            else if cat.name =='Portal Content'
+              .panel-body
+                ul
+                  each entry in cat.entries
+                    li
+                      a(href=entry.url)= entry.title
+    else if (toc) && !authUser
       each cat, name in toc
         .panel.panel-default
           .panel-heading
@@ -32,3 +136,17 @@ block content
               each entry in cat.entries
                 li
                   a(href=entry.url)= entry.title
+          
+                        
+                              
+                        
+
+
+                  
+                      
+                    
+                
+
+   
+
+

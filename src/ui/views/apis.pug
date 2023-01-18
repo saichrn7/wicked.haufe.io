@@ -20,11 +20,15 @@ mixin apiCategories(apiTags, params)
           .form-group
             b API Categories
             input(name='filter' id='filter' value='on' type='hidden')
-            each tag, i in apiTags
-              +checkBox(tag, params[tag])
-            button(type='submit' onclick='checkCategoryFilter()').btn.btn-primary Filter
+            div(style='height: 250px; overflow-y: scroll; overflow-x: hidden;')
+              each tag, i in apiTags
+                +checkBox(tag, params[tag])
+            button(type='submit' style='float: left; margin-top: 10px;' class='filter-button' 
+            br
+            onclick='checkCategoryFilter()').btn.btn-primary Filter
             | &nbsp;
-            a(class="btn btn-primary" href="/apis" role="button") Clear
+            a(class="btn btn-primary clear-button" href="/apis" style='float: left; margin: 10px;' role="button") Clear
+
 
 mixin apiDef(anApi)
     .col-md-4
