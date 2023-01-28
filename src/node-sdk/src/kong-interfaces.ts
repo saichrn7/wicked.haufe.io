@@ -63,6 +63,7 @@ export interface KongRoute {
         id: string
     }
     name? :string
+    plugins? : KongPlugin[]
 }
 
 export interface KongPlugin {
