@@ -320,6 +320,16 @@ function assemblePluginTodoLists(portalApi: ApiDescription, kongApi: KongApiConf
     const deleteList = [] as DeletePluginItem[];
 
     const handledKongPlugins = {};
+    let route_level_plugin = portalApi.config.api.enable_routes;
+    if(route_level_plugin) {
+        let compareData = processRouteLevelPlugins(portalApi,kongApi)
+        compareData.addPluginList.length > 0 ? addList.push(...compareData.addPluginList) : ""
+        compareData.deletePluginList.length > 0 ? deleteList.push(...compareData.deletePluginList) : ""
+        compareData.updatePluginList.length > 0 ? updateList.push(...compareData.updatePluginList) : ""
+        
+         //filter out all the route level plugins 
+        kongApi.plugins = kongApi.plugins.filter(pluginData=> pluginData.route == null)
+    }
     for (let i = 0; i < portalApi.config.plugins.length; ++i) {
         let portalPlugin = portalApi.config.plugins[i];
         let kongPluginIndex = utils.getIndexBy(kongApi.plugins, function (plugin) { return plugin.name == portalPlugin.name; });
@@ -465,4 +475,157 @@ function assembleConsumerApiPluginsTodoLists(portalConsumer: ConsumerInfo, kongC
         patchList: patchList,
         deleteList: deleteList
     };
+}
+
+function processRouteLevelPlugins(portalApi: ApiDescription,kongApi: KongApiConfig) {
+
+    debug('processRouteLevelPlugins()');
+
+    let portalRoutes = portalApi.config.api.routes
+    
+    let kongRouteLevelPlugins = []
+    if(Array.isArray(kongApi.plugins) && kongApi.plugins.length > 0) {
+        kongRouteLevelPlugins = kongApi.plugins.filter(pluginData => pluginData.route !== null)
+    }
+
+    const addRoutePluginList = [] as AddPluginItem[];
+    const updateRoutePluginList = [] as UpdatePluginItem[];
+    const deleteRoutePluginList = [] as DeletePluginItem[];
+
+
+    let portalRoutePlugins = {}
+    let kongRoutePlugins = {}
+    let serviceRouteMap = {}
+    //fetch all the routes available for this service,We are doing it to get the route id..
+
+    utils.kongGetServiceRouteIds(portalApi.config.api.name,function(err,response) {
+        if(err) {
+            debug('error occured while fetching route metadata for a service during route level plugin CRUD')
+            return
+        }
+        serviceRouteMap = response
+    })
+
+        portalRoutes.forEach((portalRouteElement)=> {
+            portalRoutePlugins[portalRouteElement.name] = {}
+            let portalRouteElementPlugins = portalRouteElement.plugins;
+            portalRouteElementPlugins.forEach((portalPluginElement)=> {
+                let portalPlugin = portalPluginElement
+                portalPlugin['route'] = {
+                    name :portalRouteElement.name
+                }
+                debug('the portal plugin generated config is-----')
+                debug(JSON.stringify(portalPlugin,null,2))
+                debug('------------------------------------------')
+                portalRoutePlugins[portalRouteElement.name][portalPluginElement.name] = portalPlugin;
+            })
+        })
+
+        debug('constructed the portal route plugin json, data is ')
+        debug('-------------><---------------------------')
+        debug(JSON.stringify(portalRoutePlugins,null,2))
+        debug('-------------><---------------------------')
+    
+        //similarly construct kong plugin tree..
+
+        kongRouteLevelPlugins.forEach((kongPluginElement) => {
+
+            let route_id = kongPluginElement.route.id
+            let routeName = ""
+            //now get the name of route
+            for(const key in serviceRouteMap) {
+                if(serviceRouteMap[key] === route_id) {
+                    routeName = key
+                    console.log('found route id...');
+                    break;
+                }
+            }
+
+            //if we found the route name..now its time to compare the 
+            //portal route name plugin with present config and patch accordingly
+            if(null != routeName && "" != routeName) {
+                if(!kongRoutePlugins[routeName]) {
+                    kongRoutePlugins[routeName] = {}
+                }
+                kongRoutePlugins[routeName][kongPluginElement.name] = kongPluginElement
+            }
+        })
+
+        debug('constructed the kong route plugin json, data is ')
+        debug('-------------><---------------------------')
+        debug(JSON.stringify(kongRoutePlugins))
+        debug('-------------><---------------------------')
+
+
+        //now iterate and check in kong accordingly
+        for(let routeElem in portalRoutePlugins) {
+            //if route itself is missing then add everything..
+            if(kongRoutePlugins.hasOwnProperty(routeElem)) {
+                let portalPlugins = portalRoutePlugins[routeElem]
+                for(let pluginName in portalPlugins) {
+                    if(!kongRoutePlugins[routeElem][pluginName]) {
+                            addRoutePluginList.push({
+                                portalApi: portalApi,
+                                portalPlugin: portalPlugins[pluginName],
+                                kongApi: kongApi
+                            }) 
+                        } else  {
+                            let portalPluginData = portalRoutePlugins[routeElem][pluginName]
+                            let kongPluginData = kongRoutePlugins[routeElem][pluginName]
+                            if (!utils.matchObjects(portalPluginData, kongPluginData) && !shouldIgnore(kongPluginData.name)) {
+                                updateRoutePluginList.push({
+                                    portalApi: portalApi,
+                                    portalPlugin: portalPluginData,
+                                    kongApi: kongApi,
+                                    kongPlugin: kongPluginData
+                                });
+                            }
+                        }
+                    }
+            } else {
+                let portalPlugins = portalRoutePlugins[routeElem]
+                for(let pluginName in portalPlugins) {
+                    addRoutePluginList.push({
+                        portalApi: portalApi,
+                        portalPlugin: portalPlugins[pluginName],
+                        kongApi: kongApi
+                    }) 
+                }
+            }
+        }
+
+        //theoritically we are done with add and update..now lets check for delete and return arrays
+
+        //will iterate the kong plugin elements and if they are notr present in porta...blast it
+
+        for(let routeElem in kongRoutePlugins) {
+            if(!portalRoutePlugins.hasOwnProperty(routeElem)) {
+                let deleteRoutePlugins = kongRoutePlugins[routeElem]
+                for(let pluginKey in deleteRoutePlugins) {
+                    deleteRoutePluginList.push({
+                        kongApi: kongApi,
+                        kongPlugin: kongRoutePlugins[routeElem][pluginKey]
+                    });
+                }
+            } else {
+                let kongrtplugins = kongRoutePlugins[routeElem]
+                for(let pluginKey in kongrtplugins) {
+                    if(!portalRoutePlugins[routeElem][pluginKey]) {
+                        deleteRoutePluginList.push({
+                            kongApi: kongApi,
+                            kongPlugin: kongRoutePlugins[routeElem][pluginKey]
+                        });
+                    }
+                }
+            }
+        }
+
+    return {
+        addPluginList: addRoutePluginList,
+        updatePluginList: updateRoutePluginList,
+        deletePluginList: deleteRoutePluginList
+    };
+
+
+
 }

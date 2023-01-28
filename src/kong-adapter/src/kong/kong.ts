@@ -103,6 +103,12 @@ export const kong = {
 
             debug('portalApi: ' + JSON.stringify(portalApi.config.api, null, 2));
             debug('kongApi: ' + JSON.stringify(kongApi.api, null, 2));
+            let enable_routes = false
+            let apiConfig = portalApi.config.api
+            if(apiConfig && apiConfig["enable_routes"]){
+                enable_routes = apiConfig.enable_routes;
+                delete portalApi.config.api.enable_routes;
+            }
             const apiUpdateNeeded = !utils.matchObjects(portalApi.config.api, kongApi.api);
 
             if (apiUpdateNeeded) {
@@ -113,12 +119,14 @@ export const kong = {
                         return callback(err);
 
                     // Plugins
+                    portalApi.config.api.enable_routes = enable_routes
                     sync.syncPlugins(portalApi, kongApi, callback);
                 });
             } else {
                 debug("API '" + portalApi.name + "' matches.");
 
                 // Plugins
+                portalApi.config.api.enable_routes = enable_routes
                 sync.syncPlugins(portalApi, kongApi, callback);
             }
         }, done);

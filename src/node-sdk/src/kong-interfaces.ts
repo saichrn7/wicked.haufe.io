@@ -62,6 +62,7 @@ export interface KongRoute {
     service: {
         id: string
     }
+    name? :string
 }
 
 export interface KongPlugin {
