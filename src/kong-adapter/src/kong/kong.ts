@@ -89,7 +89,7 @@ export const kong = {
                                 pluginElement.route = {
                                     name : routeElement.name
                                 }
-                                debug('creating route level plugin of newly added api ---'+${addItem.portalApi.id}+"----plugin data---"+JSON.stringify(pluginElement))
+                                debug('creating route level plugin of newly added api ---'+apiConfig.name+'----plugin data---"+JSON.stringify(pluginElement)');
                                 addList.push({
                                     portalApi: addItem,
                                     portalPlugin: pluginElement,
