@@ -56,6 +56,7 @@ export const sync = {
         });
     },
 
+    //@ts-ignore
     syncPlugins: async function (portalApi: ApiDescription, kongApi: KongApiConfig, callback: ErrorCallback): void {
         debug('syncPlugins()');
         const todoLists = await assemblePluginTodoLists(portalApi, kongApi);
@@ -314,6 +315,7 @@ function shouldIgnore(name) {
     return false;
 }
 
+//@ts-ignore
 async function assemblePluginTodoLists(portalApi: ApiDescription, kongApi: KongApiConfig): PluginTodos {
     debug('assemblePluginTodoLists()');
     const addList = [] as AddPluginItem[];
@@ -329,7 +331,7 @@ async function assemblePluginTodoLists(portalApi: ApiDescription, kongApi: KongA
         compareData.updatePluginList.length > 0 ? updateList.push(...compareData.updatePluginList) : ""
     } 
     if(false == route_level_plugin) {
-        let routePlugins = [] as DeletePluginItem[];
+        let routePlugins = [];
         routePlugins = kongApi.plugins.filter(pluginData => pluginData.route !== null);
         if(routePlugins.length > 0) {
             routePlugins.forEach((pluginElement)=>{
