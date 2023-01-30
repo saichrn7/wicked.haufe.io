@@ -78,6 +78,27 @@ export const kong = {
                         kongApi: kongApi,
                     });
                 }
+                let apiConfig = addItem.portalApi.config.api;
+                if (apiConfig && true == apiConfig["enable_routes"]) {
+                    debug('new api has route level plugings,processing those..');
+                    let routes = apiConfig.routes
+                    routes.forEach(routeElement => {
+                        let routeElemPlugins = routeElement.plugins
+                        if(routeElemPlugins && routeElemPlugins.length > 0) {
+                           routeElemPlugins.forEach((pluginElement) => {
+                                pluginElement.route = {
+                                    name : routeElement.name
+                                }
+                                debug('creating route level plugin of newly added api ---'+${addItem.portalApi.id}+"----plugin data---"+JSON.stringify(pluginElement))
+                                addList.push({
+                                    portalApi: addItem,
+                                    portalPlugin: pluginElement,
+                                    kongApi: kongApi,
+                                }); 
+                           })
+                        }
+                    });
+                }
                 kong.addKongPlugins(addList, callback);
             });
         }, function (err) {
