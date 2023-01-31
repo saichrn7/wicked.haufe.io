@@ -509,7 +509,6 @@ async function processRouteLevelPlugins(portalApi: ApiDescription, kongApi: Kong
 
     let portalRoutePlugins = {}
     let kongRoutePlugins = {}
-    let serviceRouteMap = {}
     //fetch all the routes available for this service,We are doing it to get the route id..
 
 
@@ -564,8 +563,8 @@ async function processRouteLevelPlugins(portalApi: ApiDescription, kongApi: Kong
         let route_id = kongPluginElement.route.id
         let routeName = ""
         //now get the name of route
-        for (const key in serviceRouteMap) {
-            if (serviceRouteMap[key] === route_id) {
+        for (const key in routeNameIdDict) {
+            if (routeNameIdDict[key] === route_id) {
                 routeName = key
                 console.log('found route id...');
                 break;
