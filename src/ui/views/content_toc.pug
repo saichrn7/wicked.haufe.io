@@ -58,7 +58,7 @@ block content
               table, tr{
                 display: block;
                 width: 30%;
-                background-color:red;
+
               }
               tr{
               margin-bottom:15px;
@@ -92,50 +92,56 @@ block content
                 width:48%;
               }
               }
-               @media(min-width: 900px)and (max-width: 950px)  {
+              @media(min-width: 900px)and (max-width: 1199px)  {
               table, tr{
-              display: block;
-              width: auto;
+                 display: block;
+                 width: 100%;
               }
               tr,th{
-              margin-bottom:15px;
-              width: 70%;
+                 margin-bottom:15px;
+                 width: 70%;
               }
               td{
-              width:78%;
-              word-wrap: break-word; 
+              width:70%;
+              
               }
               }
             if cat.name == 'APIs'
-              table  
-                    tr
-                      th APIs
-                      th Tags
-                      th Groups 
-                    each entry in cat.entries
+              div(style = "height: 200px; overflow:auto;")
+                table  
                       tr
-                        td 
-                          a(href=entry.url)= entry.title
-                        td 
-                          a(href=entry.url)= entry.tags
-                        td 
-                          a(href=entry.url)= entry.requiredGroup
+                        th APIs
+                        th Tags
+                        th Groups 
+                      each entry in cat.entries
+                        tr
+                          td 
+                            a(href=entry.url)= entry.title
+                          td 
+                            a(href=entry.url)= entry.tags
+                          td  
+                            a(href=entry.url style="text-transform:capitalize; font-style: nomral;")= entry.requiredGroup
+                            
             else if cat.name =='Portal Content'
               .panel-body
                 ul
                   each entry in cat.entries
-                    li
-                      a(href=entry.url)= entry.title
+                    if (entry.title !== 'API Usage Information' && entry.title !==  'Terms and Conditions')
+                      li
+                        a(href=entry.url)= entry.title
+                      
     else if (toc) && !authUser
       each cat, name in toc
         .panel.panel-default
           .panel-heading
             h4.panel-title= cat.name
           .panel-body
-            ul
-              each entry in cat.entries
-                li
-                  a(href=entry.url)= entry.title
+            div(style="height: 200px; overflow: auto")
+              ul
+                each entry in cat.entries
+                  if (entry.title !== 'API Usage Information' && entry.title !==  'Terms and Conditions' && entry.title !==  'API Status Dashboard')
+                      li
+                        a(href=entry.url)= entry.title
           
                         
                               
