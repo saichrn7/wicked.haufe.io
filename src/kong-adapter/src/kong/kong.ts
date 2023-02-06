@@ -126,7 +126,7 @@ export const kong = {
             debug('kongApi: ' + JSON.stringify(kongApi.api, null, 2));
             let enable_routes = false
             let apiConfig = portalApi.config.api
-            if(apiConfig && apiConfig["enable_routes"]){
+            if(apiConfig && "enable_routes" in apiConfig){
                 enable_routes = apiConfig.enable_routes;
                 delete portalApi.config.api.enable_routes;
             }
