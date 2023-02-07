@@ -20,7 +20,8 @@ export interface KongApi {
     read_timeout?: number,
     write_timeout?: number,
     upstream_url: string,
-    routes?: KongRoute[]
+    routes?: KongRoute[],
+    enable_routes?: boolean
 }
 
 export enum ProtocolType {
@@ -62,6 +63,8 @@ export interface KongRoute {
     service: {
         id: string
     }
+    name? :string
+    plugins? : KongPlugin[]
 }
 
 export interface KongPlugin {
@@ -73,7 +76,8 @@ export interface KongPlugin {
         id: string
     },
     route?: {
-        id: string
+        id?: string,
+        name?: string
     },
     consumer?: {
         id: string
