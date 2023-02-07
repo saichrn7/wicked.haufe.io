@@ -516,6 +516,7 @@ async function processRouteLevelPlugins(portalApi: ApiDescription, kongApi: Kong
     try {
         let requestUrl = utils.getKongUrl()
         requestUrl = requestUrl + 'services/' + portalApi.config.api.name + '/routes'
+        debug('final kong request url is----'+requestUrl);
         const response = await axios.get(requestUrl);
         const routesData = response.data.data ? response.data.data : []
         routesData.forEach((route) => {
