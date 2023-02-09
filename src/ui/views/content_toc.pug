@@ -21,9 +21,21 @@ block content
       br
     br
     br
-      
+
+    if (authUser == undefined) 
+      each cat, name in toc
+          .panel.panel-default
+            .panel-heading
+              h4.panel-title= cat.name
+            .panel-body
+              div(style="max-height: 20vh; overflow: auto")
+                ul
+                  each entry in cat.entries
+                    if (entry.title !== 'API Usage Information' && entry.title !==  'Terms and Conditions' && entry.title !==  'API Status Dashboard')
+                        li
+                          a(href=entry.url)= entry.title
     
-    if (toc) && authUser
+    else if (toc) && authUser.admin 
       each cat, name in toc
         .panel.panel-default
           .panel-heading
@@ -107,7 +119,7 @@ block content
               }
               }
             if cat.name == 'APIs'
-              div(style = "height: 200px; overflow:auto;")
+              div(style="max-height: 30vh; overflow: auto")
                 table.my-table
                       tr.my-row
                         th APIs
@@ -129,30 +141,17 @@ block content
                     if (entry.title !== 'API Usage Information' && entry.title !==  'Terms and Conditions')
                       li
                         a(href=entry.url)= entry.title
+  
                       
-    else if (toc) && !authUser
+    else if (toc) && !authUser || !authUser.admin  
       each cat, name in toc
         .panel.panel-default
           .panel-heading
             h4.panel-title= cat.name
           .panel-body
-            div(style="height: 200px; overflow: auto")
+            div(style="max-height: 20vh; overflow: auto")
               ul
                 each entry in cat.entries
                   if (entry.title !== 'API Usage Information' && entry.title !==  'Terms and Conditions' && entry.title !==  'API Status Dashboard')
                       li
                         a(href=entry.url)= entry.title
-          
-                        
-                              
-                        
-
-
-                  
-                      
-                    
-                
-
-   
-
-
