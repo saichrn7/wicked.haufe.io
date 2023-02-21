@@ -150,6 +150,11 @@ Vue.component('wicked-api', {
 
 Vue.component('wicked-api-kong', {
     props: ['value', 'envPrefix'],
+    methods: {
+        emitRouteObjChanges : function(upDatedRoutesData) {
+            this.$emit('route-changes-event', upDatedRoutesData);
+        }
+    }, 
     template: `
     <wicked-panel :open=true title="Kong (Gateway) Configuration" type="primary">
         <wicked-input v-model="value.api.host" label="API Host:" hint="API Host, it could be alternate DNS for the service" :env-var="envPrefix + 'HOST'" />
@@ -162,7 +167,7 @@ Vue.component('wicked-api-kong', {
           <wicked-input v-model="value.api.read_timeout" number="true" label="Read timeout:" hint="The timeout in milliseconds between two successive read operations for transmitting a request to the upstream server. Defaults to <code>60000</code>" />
         </wicked-panel>
 
-        <wicked-routes v-model="value.api.routes"/>
+        <wicked-routes v-on:input="emitRouteObjChanges" v-model="value.api"/>
     </wicked-panel>
 `
 });
@@ -199,7 +204,13 @@ Vue.component('wicked-api-swagger', {
 
 const vm = new Vue({
     el: '#vueBase',
-    data: injectedData
+    data: injectedData,
+    methods : {
+        refreshPluginSection : function(updatedRoutesData) {
+           console.log('taking the updated routes from routeData Chang event')
+           this.$refs.apiPluginComponent.updateRoutes(updatedRoutesData)
+        }
+    }
 });
 
 function isValidURL(uri) {

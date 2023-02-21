@@ -420,7 +420,8 @@ Vue.component('wicked-routes', {
     data: function () {
         return {
             internalId: randomId(),
-            values: this.value
+            values: this.value.routes,
+            route_plugin_status: this.value.enable_routes
         };
     },
     methods: {
@@ -433,8 +434,13 @@ Vue.component('wicked-routes', {
                 protocols: [],
                 methods: []
             });
-
-            this.$emit('input', this.values);
+            if(this.route_plugin_status) {
+                this.addRouteNames()
+            } else {
+                this.removeRouteNames()
+            }
+            this.value.routes=this.values
+            this.$emit('input', this.value);
         },
         deleteRoute: function (index) {
             if (this.values.length <= 1) {
@@ -442,16 +448,45 @@ Vue.component('wicked-routes', {
                 return;
             }
             this.values.splice(index, 1);
-            this.$emit('input', this.values);
+            this.value.routes=this.values
+            this.$emit('input', this.value);
+        },
+        routePluginEnabled: function(routeChkboxStatus) {
+            if(routeChkboxStatus) {
+             this.route_plugin_status=true
+             this.addRouteNames()
+            } else {
+             this.route_plugin_status=false
+             this.removeRouteNames()
+            }
+            return
+         },
+        addRouteNames : function() {
+            for(let elem_index in this.values) {
+                let route_element = this.values[elem_index]
+                if(!route_element.name) {
+                  route_element.name = this.value.name + '-route-' + Math.floor(Math.random() * (10000 - this.values.length+1)) + this.values.length  ;
+                }
+                
+            }
+            this.$emit('input', this.value);
+        },
+        removeRouteNames : function() {
+            for(let route_element of this.values) {
+                route_element.name = null
+            }
+            this.$emit('input', this.value);
         }
     },
     template: `
         <wicked-panel title="API Routes" type="default" :collapsible=false :open=true>
+        <wicked-checkbox v-model="value.enable_routes" v-on:input="routePluginEnabled" label="<b>Enable Route Plugins</b>. Check this box if you want to enable route level plugins." />
             <div v-for="(route, index) in values">
                 <div class="panel panel-default">
                     <button v-if="index > 0" v-on:click="deleteRoute(index)" :id="internalId + '.' + index" class="btn btn-danger pull-right" type="button"><span class="glyphicon glyphicon-remove"></span></button>
 
                     <div class="panel-body">
+                        <wicked-input v-model="route.name" :readonly=true v-if="route_plugin_status" label="Route Name:"/>
                         <wicked-string-array v-model="route.paths" :allow-empty=false label="Paths:" hint="A list of paths that match this Route. For example: <code>/my-path</code>. At least one of <code>hosts</code>, <code>paths</code> or <code>methods</code> must be set." />
                         <wicked-checkbox v-model="route.strip_path" label="<b>Strip Uri</b>. Check this box if you don't want to pass the uri to the backend URL as well. Normally you wouldn't want that." />
                         <wicked-checkbox v-model="route.preserve_host" label="<b>Preserve Host</b>. Preserves the original <code>Host</code> header sent by the client, instead of replacing it with the hostname of the <code>upstream_url</code>." />
