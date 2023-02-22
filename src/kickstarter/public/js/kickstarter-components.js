@@ -800,3 +800,180 @@ Vue.component('helm-chart', {
         <a href="https://github.com/Haufe-Lexware/wicked.haufe.io/tree/master/wicked" target="_blank">Wicked Kubernetes Helm Chart</a>
     `
 });
+
+
+Vue.component('wicked-route-plugins', {
+    props: ['value'],
+    data: function () {
+        console.log(JSON.stringify(this.value))
+        let wicked_plugins ={
+            'rate-limiting': false,
+            'cors': false,
+            'jwt': false,
+            'aws-lambda': false,
+            'url-replace': false,
+            'eureka-router': false,
+            'session-validation' :false,
+            'keyauth-entitlement' : false,
+            'wos-session-auth' : false,
+            'other-plugins': false,
+            'auth-extensions':false
+
+        }
+        let config = this.value
+        let route_plugin_section_toggle = config.api.routes[0].name ? true : false
+        let routes_plugins_panel_data = {}
+        // get the route level plugins
+        for(let j=0;j<config.api.routes.length; j++ ) {
+            console.log(config.api.routes)
+            let route_elem = config.api.routes[j]
+            let otherRoutePlugins = []
+            let active_route_plugins = route_elem.plugins
+            routes_plugins_panel_data[route_elem.name] = {plugin_data:[],active_plugins : JSON.parse(JSON.stringify(wicked_plugins))}
+            if(active_route_plugins && active_route_plugins.length > 0) {
+                route_plugin_section_toggle = true
+                for(let i=0;i<active_route_plugins.length;i++) {
+                        let plugin_conf = active_route_plugins[i]
+                        if(!wicked_plugins.hasOwnProperty(plugin_conf.name)) {
+                            routes_plugins_panel_data[route_elem.name].active_plugins['other-plugins'] = true
+                            otherRoutePlugins.push(plugin_conf)
+                            continue;   
+                        }
+                        routes_plugins_panel_data[route_elem.name].plugin_data.push(plugin_conf)
+                        routes_plugins_panel_data[route_elem.name].active_plugins[plugin_conf.name]=true    
+                }
+
+            }
+            if(otherRoutePlugins.length > 0) {
+                routes_plugins_panel_data[route_elem.name].plugin_data.push({name : 'other-plugins', config : otherRoutePlugins})
+            }
+
+        }
+        return {
+            routes_checkbox : this.value.api.enable_routes,
+            routes_plugins :routes_plugins_panel_data,
+            wicked_plugins : wicked_plugins,
+            apiName : this.value.api.name
+        };
+    },
+    methods : {
+        updateRoutes : function(apiData) {
+            this.routes_checkbox = apiData.enable_routes
+            if(!this.routes_checkbox) {
+                this.routes_plugins ={}
+                this.$forceUpdate();
+                return
+            } else {
+                this.addRoutePlugins(apiData)
+            }
+            this.deleteExtraRoutePlugins(apiData)
+            this.$forceUpdate();
+        },
+
+        addRoutePlugins : function(routesInfo) {
+            for(let z=0;z<routesInfo.routes.length;++z) {
+                let route_elem = routesInfo.routes[z];
+                if(!this.routes_plugins[route_elem.name]) { 
+                 this.routes_plugins[route_elem.name] = {plugin_data:[],active_plugins : JSON.parse(JSON.stringify(this.wicked_plugins))}
+                }
+            }
+        },
+
+        deleteExtraRoutePlugins : function(routesInfo) {
+            let array_elem = JSON.parse(JSON.stringify(this.routes_plugins))
+                for(let key in array_elem) {
+                    let found = false
+                    for(let m=0;m<routesInfo.routes.length;++m) {
+                      let r_elem = routesInfo.routes[m]
+                      if(r_elem.name==key) {
+                        found=true
+                        }
+                    }
+                  if(!found) {
+                    delete this.routes_plugins[key]
+                   }
+
+                }
+        },
+
+        deleteRoutePlugin : function(route_name,index_value) {
+            let route_data = this.routes_plugins[route_name]
+            route_data.splice(index_value, 1);
+            if(route_data.length == 0) {
+                delete this.mock_routes[route_name]
+            } else  {
+            this.routes_plugins[route_name] = route_data
+            }
+        },
+
+        deleteRouteName : function(route_name) {
+            delete this.routes_plugins[route_name]
+        },
+
+        updateRoutePluginList : function(plugin_name,route_name,event) {
+            if(event.target.checked) {
+            this.routes_plugins[route_name].active_plugins[plugin_name] = true
+            let plugin_body = { name:plugin_name}
+            if(plugin_name != 'other-plugins') {
+                        plugin_body.config = {}
+                } else  {
+                    plugin_body.config = []
+                }
+                this.routes_plugins[route_name].plugin_data.push(plugin_body)
+            } else {
+                    this.routes_plugins[route_name].active_plugins[plugin_name] = false
+                    for(let i=0;i< this.routes_plugins[route_name].plugin_data.length ; ++i) {
+                        let data = this.routes_plugins[route_name].plugin_data[i]
+                        if(plugin_name==data.name) {
+                            this.routes_plugins[route_name].plugin_data.splice(i, 1);
+                        }
+                    }
+            }
+            this.$forceUpdate();
+        },
+        updatePluginValue : function(event,plugin_name,route_name) {
+            try {
+                let event_data = JSON.parse(event.target.value)
+                let p_data = this.routes_plugins[route_name].plugin_data
+                for(let i=0;i<p_data.length;++i) {
+                    if(plugin_name==p_data[i].name){
+                        if(plugin_name != 'other-plugins') {
+                        p_data[i] = {name:plugin_name,config:event_data.config} 
+                        } else  {
+                        p_data[i] = {name:plugin_name,config:event_data}   
+                        }
+    
+                    }
+                }
+                this.routes_plugins[route_name].plugin_data = p_data
+            } catch(err) {
+                alert("Warning! Plugin " + plugin_name + "under route " + route_name + " changes will not be saved because of invalid json format")
+            }
+        },
+        getPanelType: function (enabled) {
+            return enabled ? 'success' : 'info';
+        }
+    },
+    template : `
+    <wicked-panel title="Route level Plugins Configuration" type="primary" :open=true v-if="this.routes_checkbox">
+        <div style="float:right">
+            <a href="/plugindocs" target="_blank"> Sample Plugin Configs </a>
+        </div>
+        <br>
+        <br>
+        <div v-for="(value,route_name,index) in routes_plugins">
+            <wicked-panel :title=route_name :type="getPanelType(routes_checkbox)">
+                <div v-for="(value, name,index) in value.active_plugins" style="display: inline-block;text-align:center;">
+                <input type='checkbox' :name=name :value=name @change="updateRoutePluginList(name,route_name,$event)" :checked=value style="margin: 0px 0px 0px 0px;"><label style="margin: 0px 20px 0px 3px;">{{name}}</label>
+                </div>
+                <div id="app">
+                    <div v-for="(value1, index1) in value.plugin_data">
+                        <wicked-panel :title=value1.name :type="getPanelType(routes_checkbox)">
+                            <textarea class="form-control" :value="value1.name == 'other-plugins' ? JSON.stringify(value1.config,null,4) : JSON.stringify(value1,null,4)" style="height:200px" @change="updatePluginValue($event,value1.name,route_name)">{{ value }}</textarea>  
+                        </wicked-panel>
+                    </div>
+                </div>
+            </wicked-panel>
+        </div>
+    </wicked-panel>`
+})
