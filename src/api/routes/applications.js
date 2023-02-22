@@ -105,7 +105,7 @@ applications.getSubscriptionByClientId = function (req, res) {
 const accessFlags = {
     NONE: 0,
     ADMIN: 1,
-    COLLABORATE: 2,
+    COLLABORATOR: 2,
     READ: 4
 };
 
@@ -301,6 +301,10 @@ applications.getApplication = function (app, res, loggedInUserId, appId) {
                 appInfo._links.addSubscription = { href: '/applications/' + appId + '/subscriptions', method: 'POST' };
                 appInfo._links.deleteApplication = { href: '/applications/' + appId, method: 'DELETE' };
                 appInfo._links.patchApplication = { href: '/applications/' + appId, method: 'PATCH' };
+            }
+            // adding the subscription button access to collaborator
+            if(access == accessFlags.COLLABORATOR) {
+                appInfo._links.addSubscription = { href: '/applications/' + appId + '/subscriptions', method: 'POST' };
             }
             utils.normalizeRedirectUris(appInfo);
             res.json(appInfo);
