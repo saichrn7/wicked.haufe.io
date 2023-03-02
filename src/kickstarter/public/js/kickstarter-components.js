@@ -397,6 +397,7 @@ Vue.component('wicked-string-array', {
     template: `
         <div>
             <label>{{label}}</label>
+            <p>Tags are used to categorize and filter the APIs</p>
             <div class="panel panel-default">
                 <div class="panel-body">
                     <div v-for="(s, index) in values" class="input-group" style="padding-bottom: 5px">
