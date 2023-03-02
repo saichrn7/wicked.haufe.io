@@ -118,6 +118,23 @@ router.get('/:apiId', function (req, res, next) {
     const apiId = req.params.apiId;
     const safeApiId = utils.makeSafeId(apiId);
     const apis = utils.loadApis(req.app);
+
+    // suggest from existing tags start
+    let existingTags = [];
+    // Get all existing tags
+    for (let api of apis.apis){
+        for(let tag of api.tags){
+            existingTags.push(tag);
+        }
+    }
+    // Make them unique
+    const sTags = existingTags.filter((value, index, self) => {
+        return self.indexOf(value) === index;
+      });
+
+     const suggested_tags = {"tags":sTags}
+    // suggest from existing tags end
+    
     const glob = utils.loadGlobals(req.app);
     const thisApi = apis.apis.find(a => a.id === apiId);
     if (!thisApi.hasOwnProperty('requiredGroup'))
@@ -188,7 +205,8 @@ router.get('/:apiId', function (req, res, next) {
         groups: groups,
         plans: plans,
         pools: pools,
-        settings: {}
+        settings: {},
+        suggested_tags
     });
 });
 

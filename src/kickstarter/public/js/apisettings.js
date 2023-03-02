@@ -1,7 +1,7 @@
 /* global Vue, $, injectedData */
 
 Vue.component('wicked-api', {
-    props: ['value', 'authMethods', 'groups', 'plans', 'pools', 'envPrefix'],
+    props: ['value', 'authMethods', 'groups', 'plans', 'suggested_tags', 'pools', 'envPrefix'],
     data: function () {
         return {
             newScopeId: '',
@@ -41,10 +41,10 @@ Vue.component('wicked-api', {
         <div class="form-group">
             <label>Required User Group:</label>
             <p>Specify whether users need to belong to a specific user group to be able to see and use this API.</p>
-            <wicked-group-picker :include-none=true v-model="value.requiredGroup" :groups="groups" />
+            <wicked-group-picker :include-none=false v-model="value.requiredGroup" :groups="groups" />
         </div>
 
-        <wicked-string-array :allow-empty=true v-model="value.tags" label="Tags:" />
+        <wicked-string-array :allow-empty=false v-model="value.tags" :suggested_tags="suggested_tags" label="Tags:" />
 
         <div class="form-group">
             <label>Authorization Mode:</label>
@@ -218,8 +218,19 @@ function validateData(callback) {
     let data = vm.$data;
     let error = '';
 
+
+    let token = data.api.requiredGroup
+    if (token == ''){
+        error = error + '\n API group must be specified';
+    }
+
+    token = data.api.tags
+    if(token.length == 0){
+        error = error + '\n API tags must be specified';
+    }
+
     //validate URI, most common errors we see
-    let token = data.config.api.upstream_url;
+     token = data.config.api.upstream_url;
     if (!isValidURL(token)) {
         error = error + '\nInvalid Upstream (backend) URL: ' + token;
     }

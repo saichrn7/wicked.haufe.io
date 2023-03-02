@@ -359,7 +359,7 @@ Vue.component('wicked-checkbox', {
 });
 
 Vue.component('wicked-string-array', {
-    props: ['value', 'label', 'allow-empty', 'hint'],
+    props: ['value', 'label', 'allow-empty', 'hint' , 'suggested_tags'],
     data: function () {
         // Create a copy of the thing
         const values = this.value ? JSON.parse(JSON.stringify(this.value)) : [];
@@ -400,7 +400,10 @@ Vue.component('wicked-string-array', {
             <div class="panel panel-default">
                 <div class="panel-body">
                     <div v-for="(s, index) in values" class="input-group" style="padding-bottom: 5px">
-                        <input v-on:input="updateValue" v-model="values[index]" class="form-control" />
+                        <input v-on:input="updateValue" v-model="values[index]" class="form-control" list="options" />
+                        <datalist id="options">
+                        <option v-for="(tag,index) in suggested_tags.tags" :key="index" >{{tag}}</option>
+                        </datalist>
                         <span class="input-group-btn">
                             <button v-on:click="deleteString(index)" :id="internalId + '.' + index" class="btn btn-danger" type="button"><span class="glyphicon glyphicon-remove"></span></button>
                         </span>
