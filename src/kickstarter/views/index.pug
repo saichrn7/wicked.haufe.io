@@ -78,4 +78,6 @@ block content
   .container
     .row
       +section('auditlog', kickstarter, 'Audit Log', 'Do you want to enable Audit Log? wicked can make use of Audit Log configuration to record user activity')
-      .col-md-12 &nbsp;
+      +section('businessSegments', kickstarter, 'Business Segments', 'Business Segment configuration')
+      +section('productGroups', kickstarter, 'Product Groups', 'Product Group configuration')
+      .col-md-8 &nbsp;

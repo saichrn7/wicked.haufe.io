@@ -753,6 +753,28 @@ Vue.component('wicked-markdown', {
     `
 });
 
+Vue.component('wicked-business-segment-picker', {
+    props: ['value', 'businesssegments', 'includeNone'],
+    template: `
+        <select class="form-control" :value="value" v-on:input="$emit('input', $event.target.value)">
+            <option v-if="!value && !includeNone" disabled value>Select an option</option>
+            <option v-if="!!includeNone" value="">&lt;none&gt;</option>
+            <option v-for="(segment, index) in businesssegments.business_segments" :value="segment.id">{{ segment.name }} ({{ segment.id }})</option>
+        </select>
+    `
+});
+
+Vue.component('wicked-product-group-picker', {
+    props: ['value', 'productgroups', 'includeNone'],
+    template: `
+        <select class="form-control" :value="value" v-on:input="$emit('input', $event.target.value)">
+            <option v-if="!value && !includeNone" disabled value>Select an option</option>
+            <option v-if="!!includeNone" value="">&lt;none&gt;</option>
+            <option v-for="(pgroup, index) in productgroups.product_groups" :value="pgroup.id">{{ pgroup.name }} ({{ pgroup.id }})</option>
+        </select>
+    `
+});
+
 Vue.component('wicked-group-picker', {
     props: ['value', 'groups', 'includeNone'],
     template: `

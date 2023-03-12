@@ -192,6 +192,8 @@ router.get('/:apiId', function (req, res, next) {
     const groups = utils.loadGroups(req.app);
     const plans = utils.loadPlans(req.app);
     const pools = utils.loadPools(req.app);
+    const businessSegments = utils.loadBusinessSegments(req.app);
+    const productGroups = utils.loadProductGroups(req.app);
 
     res.render('apisettings', {
         configPath: req.app.get('config_path'),
@@ -206,6 +208,8 @@ router.get('/:apiId', function (req, res, next) {
         plans: plans,
         pools: pools,
         settings: {},
+        businesssegments: businessSegments,
+        productgroups: productGroups,
         suggested_tags
     });
 });

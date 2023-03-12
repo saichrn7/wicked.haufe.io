@@ -508,13 +508,40 @@ function getGroupsFileName(app) {
     const groupsFile = path.join(groupsDir, 'groups.json');
     return groupsFile;
 }
+function getProductGroupsFileName(app) {
+    const configDir = getConfigDir(app);
+    const groupsDir = path.join(configDir, 'product-groups');
+    const groupsFile = path.join(groupsDir, 'product_groups.json');
+    return groupsFile;
+}
+function getBusinessSegmentFileName(app) {
+    const configDir = getConfigDir(app);
+    const groupsDir = path.join(configDir, 'business-segments');
+    const groupsFile = path.join(groupsDir, 'business_segments.json');
+    return groupsFile;
+}
 
 utils.loadGroups = function (app) {
     return JSON.parse(fs.readFileSync(getGroupsFileName(app), 'utf8'));
 };
-
+utils.loadBusinessSegments = function (app) {
+    return JSON.parse(fs.readFileSync(getBusinessSegmentFileName(app), 'utf8'));
+};
+utils.loadProductGroups = function (app) {
+    return JSON.parse(fs.readFileSync(getProductGroupsFileName(app), 'utf8'));
+};
 utils.saveGroups = function (app, groups) {
     fs.writeFileSync(getGroupsFileName(app), JSON.stringify(groups, null, 2), 'utf8');
+};
+utils.saveProductGroups = function (app, productGroups) {
+    console.log("utils:saveProductGroups")
+    console.log(productGroups)
+    fs.writeFileSync(getProductGroupsFileName(app), JSON.stringify(productGroups, null, 2), 'utf8');
+};
+utils.saveBusinessSegment = function (app, businessSegments) {
+    console.log("utils:saveBusinessSegment")
+    console.log(businessSegments)
+    fs.writeFileSync(getBusinessSegmentFileName(app), JSON.stringify(businessSegments, null, 2), 'utf8');
 };
 
 function getApisFileName(app) {

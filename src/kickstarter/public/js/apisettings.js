@@ -1,7 +1,7 @@
 /* global Vue, $, injectedData */
 
 Vue.component('wicked-api', {
-    props: ['value', 'authMethods', 'groups', 'plans', 'suggested_tags', 'pools', 'envPrefix'],
+    props: ['value', 'authMethods', 'groups', 'plans', 'suggested_tags', 'businesssegments','productgroups', 'pools', 'envPrefix'],
     data: function () {
         return {
             newScopeId: '',
@@ -42,6 +42,18 @@ Vue.component('wicked-api', {
             <label>Required User Group:</label>
             <p>Specify whether users need to belong to a specific user group to be able to see and use this API.</p>
             <wicked-group-picker :include-none=false v-model="value.requiredGroup" :groups="groups" />
+        </div>
+
+        <div class="form-group">
+            <label>Business Segment:</label>
+            <p>Specify which Business Segment the API belongs.</p>
+            <wicked-business-segment-picker :include-none=false v-model="value.businessSegment" :businesssegments="businesssegments" />
+        </div>
+
+        <div class="form-group">
+            <label>Product Group:</label>
+            <p>Specify which Product Group the API belongs.</p>
+            <wicked-product-group-picker :include-none=false v-model="value.productGroup" :productgroups="productgroups" />
         </div>
 
         <wicked-string-array :allow-empty=false v-model="value.tags" :suggested_tags="suggested_tags" label="Tags:" />
@@ -227,6 +239,16 @@ function validateData(callback) {
     token = data.api.tags
     if(token.length == 0){
         error = error + '\n API tags must be specified';
+    }
+
+    token = data.api.businessSegment
+    if(token == undefined){
+        error = error + '\n Business Segment must be specified';
+    }
+
+    token = data.api.productGroup
+    if(token == undefined){
+        error = error + '\n Product Group must be specified';
     }
 
     //validate URI, most common errors we see
