@@ -239,6 +239,28 @@ router.post('/:apiId/api', function (req, res, next) {
         api: config.api,
         plugins: plugins
     };
+
+    // Start -- Adding headers via request-transformer for business segments and product groups
+    const BUSINESS_SEGMENT_HEADER_NAME = "business_segment";
+    const PRODUCT_GROUP_HEADER_NAME = "product_group";
+    let containsRequestTransformer =false;
+    console.log("Printing configuration") 
+    for(let plugin of kongConfig.plugins){
+        if(plugin.name == "request-transformer" && (JSON.stringify(plugin.config).includes(BUSINESS_SEGMENT_HEADER_NAME) || JSON.stringify(plugin.config).includes(PRODUCT_GROUP_HEADER_NAME))) containsRequestTransformer =true;
+    }
+    if(!containsRequestTransformer){
+            let requestTransformerPlugin = {
+                "config":{
+                    "add":{
+                        "headers":[`${BUSINESS_SEGMENT_HEADER_NAME}:${body.api.productGroup}`,`${PRODUCT_GROUP_HEADER_NAME}:${body.api.productGroup}`]
+                    }
+                },
+                "name":"request-transformer"
+            }
+            kongConfig.plugins.push(requestTransformerPlugin);  
+    }
+    // End -- Adding headers via request-transformer for business segments and product groups
+
     utils.saveApiConfig(req.app, apiId, kongConfig);
     utils.saveApiDesc(req.app, apiId, body.desc);
     let swagger = '';
