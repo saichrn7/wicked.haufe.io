@@ -23,4 +23,15 @@ router.post('/', function (req, res, next) {
     res.redirect(redirect);
 });
 
+router.get('/plugindocs', function (req, res) {
+    const plugin_doc = JSON.parse(JSON.stringify(utils.getPluginList()))
+    for(let elem of plugin_doc.data) {
+      elem.config = {name : elem.name,config:elem.config}
+    }
+    res.render('help',
+        {
+            p_data: plugin_doc.data
+        });
+})
+
 module.exports = router;
