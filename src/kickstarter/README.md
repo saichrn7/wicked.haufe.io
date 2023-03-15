@@ -23,3 +23,12 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+
+## Changelog 16/03/2023
+
+* Added option to add Business Segment and Product Group for APIs.
+* Added option to add owners for the APIs. Auto suggest Owner emails.
+* Made Business Segment , Product Group and Owner as mandatory fields.
+* Tags can now be selected from suggested list of existing tags.
+* Groups list sorted alphabetically

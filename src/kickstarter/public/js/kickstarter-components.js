@@ -359,7 +359,7 @@ Vue.component('wicked-checkbox', {
 });
 
 Vue.component('wicked-string-array', {
-    props: ['value', 'label', 'allow-empty', 'hint' , 'suggested_tags'],
+    props: ['value', 'label', 'allow-empty', 'hint'],
     data: function () {
         // Create a copy of the thing
         const values = this.value ? JSON.parse(JSON.stringify(this.value)) : [];
@@ -401,9 +401,128 @@ Vue.component('wicked-string-array', {
             <div class="panel panel-default">
                 <div class="panel-body">
                     <div v-for="(s, index) in values" class="input-group" style="padding-bottom: 5px">
-                        <input v-on:input="updateValue" v-model="values[index]" class="form-control" list="options" />
-                        <datalist id="options">
+                        <input v-on:input="updateValue" v-model="values[index]" class="form-control" />
+                        <span class="input-group-btn">
+                            <button v-on:click="deleteString(index)" :id="internalId + '.' + index" class="btn btn-danger" type="button"><span class="glyphicon glyphicon-remove"></span></button>
+                        </span>
+                    </div>
+                    <div v-if="hint !== null">
+                        <span class="wicked-note" v-html="hint"></span>
+                    </div>
+                    <button v-on:click="addString" class="btn btn-success" type="button"><span class="glyphicon glyphicon-plus"></span></button>
+                </div>
+            </div>
+        </div>
+    `
+});
+
+Vue.component('wicked-string-array-tags', {
+    props: ['value', 'label', 'allow-empty', 'hint' , 'suggested_tags'],
+    data: function () {
+        // Create a copy of the thing
+        const values = this.value ? JSON.parse(JSON.stringify(this.value)) : [];
+        let allowEmptyArray = false;
+        if (this.allowEmpty) {
+            if (typeof this.allowEmpty !== 'boolean') {
+                alert('Use :allow-empty=<true|false> to pass in a boolean; defaulting to false');
+            } else {
+                allowEmptyArray = this.allowEmpty;
+            }
+        }
+        return {
+            allowEmptyArray: allowEmptyArray,
+            internalId: randomId(),
+            values: values
+        };
+    },
+    methods: {
+        updateValue: function (event) {
+            this.$emit('input', this.values);
+        },
+        addString: function (event) {
+            this.values.push('');
+            this.$emit('input', this.values);
+        },
+        deleteString: function (index) {
+            if (this.values.length <= 1 && !this.allowEmptyArray) {
+                alert('You cannot delete the last value. There must be at least one value.');
+                return;
+            }
+            this.values.splice(index, 1);
+            this.$emit('input', this.values);
+        }
+    },
+    template: `
+        <div>
+         <div style="display:flex;flex-direction:row;"> <label>{{label}}</label> <p style="color:red"> *</p> </div>
+            <p>Tags are used to filter from the list of APIs on the Developer Portal Page.</p>
+            <p>Start typing for suggestions or Enter a new tag.</p>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div v-for="(s, index) in values" class="input-group" style="padding-bottom: 5px">
+                        <input v-on:input="updateValue" v-model="values[index]" class="form-control" list="tag_options" />
+                        <datalist id="tag_options">
                         <option v-for="(tag,index) in suggested_tags.tags" :key="index" >{{tag}}</option>
+                        </datalist>
+                        <span class="input-group-btn">
+                            <button v-on:click="deleteString(index)" :id="internalId + '.' + index" class="btn btn-danger" type="button"><span class="glyphicon glyphicon-remove"></span></button>
+                        </span>
+                    </div>
+                    <div v-if="hint !== null">
+                        <span class="wicked-note" v-html="hint"></span>
+                    </div>
+                    <button v-on:click="addString" class="btn btn-success" type="button"><span class="glyphicon glyphicon-plus"></span></button>
+                </div>
+            </div>
+        </div>
+    `
+});
+
+Vue.component('wicked-string-array-owners', {
+    props: ['value', 'label', 'allow-empty', 'hint' , 'suggested_owners'],
+    data: function () {
+        const values = this.value ? JSON.parse(JSON.stringify(this.value)) : [];
+        let allowEmptyArray = false;
+        if (this.allowEmpty) {
+            if (typeof this.allowEmpty !== 'boolean') {
+                alert('Use :allow-empty=<true|false> to pass in a boolean; defaulting to false');
+            } else {
+                allowEmptyArray = this.allowEmpty;
+            }
+        }
+        return {
+            allowEmptyArray: allowEmptyArray,
+            internalId: randomId(),
+            values: values
+        };
+    },
+    methods: {
+        updateValue: function (event) {
+            this.$emit('input', this.values);
+        },
+        addString: function (event) {
+            this.values.push('');
+            this.$emit('input', this.values);
+        },
+        deleteString: function (index) {
+            if (this.values.length <= 1 && !this.allowEmptyArray) {
+                alert('You cannot delete the last value. There must be at least one value.');
+                return;
+            }
+            this.values.splice(index, 1);
+            this.$emit('input', this.values);
+        }
+    },
+    template: `
+        <div>
+         <div style="display:flex;flex-direction:row;"> <label>{{label}}</label> <p style="color:red"> *</p> </div>
+            <p> Enter email address of the api owner(s) .Start typing for suggestions or Enter a new email.</p>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div v-for="(s, index) in values" class="input-group" style="padding-bottom: 5px">
+                        <input v-on:input="updateValue" v-model="values[index]" class="form-control" list="owner_options" />
+                        <datalist id="owner_options">
+                        <option v-for="(owner,index) in suggested_owners.owners" :key="index" >{{owner}}</option>
                         </datalist>
                         <span class="input-group-btn">
                             <button v-on:click="deleteString(index)" :id="internalId + '.' + index" class="btn btn-danger" type="button"><span class="glyphicon glyphicon-remove"></span></button>
