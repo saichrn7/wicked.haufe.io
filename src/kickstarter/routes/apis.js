@@ -272,7 +272,7 @@ router.post('/:apiId/api', function (req, res, next) {
                 },
                 "name":"request-transformer"
             }
-            kongConfig.plugins.push(requestTransformerPlugin);  
+            // kongConfig.plugins.push(requestTransformerPlugin);  // testing required
     }
     // End -- Adding headers via request-transformer for business segments and product groups
 
