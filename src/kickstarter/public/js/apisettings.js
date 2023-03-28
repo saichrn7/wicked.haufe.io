@@ -150,6 +150,11 @@ Vue.component('wicked-api', {
 
 Vue.component('wicked-api-kong', {
     props: ['value', 'envPrefix'],
+    methods: {
+        emitRouteObjChanges : function(upDatedRoutesData) {
+            this.$emit('route-changes-event', upDatedRoutesData);
+        }
+    }, 
     template: `
     <wicked-panel :open=true title="Kong (Gateway) Configuration" type="primary">
         <wicked-input v-model="value.api.host" label="API Host:" hint="API Host, it could be alternate DNS for the service" :env-var="envPrefix + 'HOST'" />
@@ -162,7 +167,7 @@ Vue.component('wicked-api-kong', {
           <wicked-input v-model="value.api.read_timeout" number="true" label="Read timeout:" hint="The timeout in milliseconds between two successive read operations for transmitting a request to the upstream server. Defaults to <code>60000</code>" />
         </wicked-panel>
 
-        <wicked-routes v-model="value.api.routes"/>
+        <wicked-routes v-on:input="emitRouteObjChanges" v-model="value.api"/>
     </wicked-panel>
 `
 });
@@ -199,7 +204,13 @@ Vue.component('wicked-api-swagger', {
 
 const vm = new Vue({
     el: '#vueBase',
-    data: injectedData
+    data: injectedData,
+    methods : {
+        refreshPluginSection : function(updatedRoutesData) {
+           console.log('taking the updated routes from routeData Chang event')
+           this.$refs.apiPluginComponent.updateRoutes(updatedRoutesData)
+        }
+    }
 });
 
 function isValidURL(uri) {
@@ -218,6 +229,7 @@ function validateData(callback) {
     let data = vm.$data;
     let error = '';
 
+    let auths = ['key-auth','oauth2','jwt']
     //validate URI, most common errors we see
     let token = data.config.api.upstream_url;
     if (!isValidURL(token)) {
@@ -273,6 +285,9 @@ function validateData(callback) {
         }
     }
 
+    let auth = data?.api?.auth
+    let route_plugins = data?.config?.api?.enable_routes
+
     //validate Route(s)
     for(let i = 0; i < data.config.api.routes.length; i += 1) {
         const route = data.config.api.routes[i];
@@ -283,8 +298,18 @@ function validateData(callback) {
         if ( !methods.length && !paths.length && !hosts.length ) {
             error = error + '\nInvalid Route #' + (i + 1) + '. At least one of hosts, paths or methods must be set.';
         }
-    }
 
+        //check if routes and service has  auth plugin
+        if(auth && "none"!=auth && route_plugins) { 
+            let plugins = route.plugins
+            plugins.forEach((pluginElem) => {
+                    if(auths.indexOf(pluginElem.name) >= 0) {
+                        error = error + `\n Error : Route ${route.name} and service ${data.config.api.name} has auth plugins enabled,Service or route should not have any auth plugins at same time`;
+                    }
+            })   
+        }
+    }
+    
     if ( error ) {
         return callback(null, error);
     }
@@ -293,9 +318,41 @@ function validateData(callback) {
     }
 };
 
+function processRouteLevelPlugins() {
+    let routePluginsData = vm.$refs.apiPluginComponent.routes_plugins
+    let configuredRoutes = vm.$data.config.api.routes
+    let enableRoutes = vm.$data.config.api.enable_routes
+
+    if (!enableRoutes) {
+        configuredRoutes.forEach((route) => {
+            route.plugins = []
+        });
+        return configuredRoutes;
+    }
+
+    Object.keys(routePluginsData).forEach((routeName) => {
+        const route = configuredRoutes.find((r) => r.name === routeName);
+        if (!route) {
+            return;
+        }
+        let rLevelPlugin = JSON.parse(JSON.stringify(routePluginsData[routeName].plugin_data));
+        const otherPluginsIndex = rLevelPlugin.findIndex((element) => element.name === "other-plugins");
+        if (otherPluginsIndex !== -1) {
+            const otherPluginData = rLevelPlugin[otherPluginsIndex];
+            rLevelPlugin.splice(otherPluginsIndex, 1);
+            otherPluginData.config.forEach((config) => {
+                rLevelPlugin.push(config);
+            });
+        }
+        route.plugins = rLevelPlugin;
+    });
+
+    return configuredRoutes;
+}
+
 function storeData() {
     const apiId = vm.api.id;
-
+    vm.$data.config.api.routes = processRouteLevelPlugins()
     validateData( function(data, error) {
         if( error ) {
             alert('Error validating data:\n' + error);

@@ -9,7 +9,7 @@ const mustache = require('mustache');
 const execSync = require('child_process').execSync;
 const envReader = require('portal-env');
 const { debug, info, warn, error } = require('portal-env').Logger('kickstarter:utils');
-
+const sample_plugins = require('./sample_plugins')
 const utils = function () { };
 
 utils.makeError = function (statusCode, errorText) {
@@ -1187,5 +1187,9 @@ utils.getVersion = function () {
     }
     return utils._packageVersion;
 };
+
+utils.getPluginList = function() {
+    return sample_plugins;
+}
 
 module.exports = utils;
