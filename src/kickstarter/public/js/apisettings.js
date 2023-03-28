@@ -45,13 +45,13 @@ Vue.component('wicked-api', {
         </div>
 
         <div class="form-group">
-            <label style="display:flex" >Business Segment: <p style="color:red"> *<p></label>
+            <label style="display:flex" >Business Segment: <p style="color:red"> *</p></label>
             <p>Specify which Business Segment the API belongs to.</p>
             <wicked-business-segment-picker :include-none=false v-model="value.businessSegment" :businesssegments="businesssegments" />
         </div>
 
         <div class="form-group">
-            <label style="display:flex">Product Group: <p style="color:red"> *<p></label>
+            <label style="display:flex">Product Group: <p style="color:red"> *</p></label>
             <p>Specify which Product Group the API belongs to.</p>
             <wicked-product-group-picker :include-none=false v-model="value.productGroup" :productgroups="productgroups" />
         </div>
@@ -237,6 +237,11 @@ function validateData(callback) {
     let error = '';
 
 
+    let token = data.desc;
+    if(token.length < 20){
+        error = error + ' Please provide description of more than 20 characters' ;
+    }
+
     token = data.api.tags
     if(token.length == 0){
         error = error + '\n API tags must be specified';
@@ -244,7 +249,7 @@ function validateData(callback) {
 
 
     token = data.api.owners
-    if(token.length == 0){
+    if(token == undefined || token.length == 0){
         error = error + '\n API Owners must be specified';
     }else{
         for(let owner of token){

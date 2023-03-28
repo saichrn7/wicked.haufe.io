@@ -633,7 +633,7 @@ utils.prepareNewApi = function (app, apiId) {
     };
     utils.saveApiConfig(app, apiId, apiConfig);
     utils.saveSwagger(app, apiId, apiSwagger);
-    utils.saveApiDesc(app, apiId, 'Your **new** API. Describe it here.');
+    utils.saveApiDesc(app, apiId, '');
 };
 
 utils.removeApiDir = function (app, apiId) {
