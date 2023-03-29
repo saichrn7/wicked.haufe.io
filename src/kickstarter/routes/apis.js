@@ -118,6 +118,34 @@ router.get('/:apiId', function (req, res, next) {
     const apiId = req.params.apiId;
     const safeApiId = utils.makeSafeId(apiId);
     const apis = utils.loadApis(req.app);
+
+    // Start - suggest from existing owners and tags
+    let existingTags = [];
+    let existingOwners = [];
+    // Get all existing tags
+    for (let api of apis.apis){
+        for(let tag of api.tags){
+            existingTags.push(tag);
+        }
+        try{
+            for(let owner of api.owners){
+                existingOwners.push(owner);
+            }}catch(e){console.log("ignore this err")} // since all apis dont have this new field , this is expected
+    }
+    // Make them unique
+    const sTags = existingTags.filter((value, index, self) => {
+        return self.indexOf(value) === index;
+      });
+
+    const sOwners = existingOwners.filter((value, index, self) => {
+        return self.indexOf(value) === index;
+      });
+
+     const suggested_tags = {"tags":sTags}
+     const suggested_owners = {"owners":sOwners}
+
+     // End - suggest from existing owners and tags
+    
     const glob = utils.loadGlobals(req.app);
     const thisApi = apis.apis.find(a => a.id === apiId);
     if (!thisApi.hasOwnProperty('requiredGroup'))
@@ -173,8 +201,11 @@ router.get('/:apiId', function (req, res, next) {
     }
 
     const groups = utils.loadGroups(req.app);
+    groups.groups.sort((a, b) => a.name.localeCompare(b.name)); // sorting group by name alphabetically
     const plans = utils.loadPlans(req.app);
     const pools = utils.loadPools(req.app);
+    const businessSegments = utils.loadBusinessSegments(req.app);
+    const productGroups = utils.loadProductGroups(req.app);
 
     res.render('apisettings', {
         configPath: req.app.get('config_path'),
@@ -188,7 +219,11 @@ router.get('/:apiId', function (req, res, next) {
         groups: groups,
         plans: plans,
         pools: pools,
-        settings: {}
+        settings: {},
+        businesssegments: businessSegments,
+        productgroups: productGroups,
+        suggested_owners: suggested_owners,
+        suggested_tags
     });
 });
 
@@ -217,6 +252,30 @@ router.post('/:apiId/api', function (req, res, next) {
         api: config.api,
         plugins: plugins
     };
+
+    // Start -- Adding headers via request-transformer for business segments and product groups
+    const BUSINESS_SEGMENT_HEADER_NAME = "business_segment";
+    const PRODUCT_GROUP_HEADER_NAME = "product_group";
+    let containsBusinessDetails =false;
+    for(let plugin of kongConfig.plugins){
+        if(plugin.name == "request-transformer" &&
+             (JSON.stringify(plugin.config).includes(BUSINESS_SEGMENT_HEADER_NAME) ||
+              JSON.stringify(plugin.config).includes(PRODUCT_GROUP_HEADER_NAME))) 
+        containsBusinessDetails =true;
+    }
+    if(!containsBusinessDetails){
+            let requestTransformerPlugin = {
+                "config":{
+                    "add":{
+                        "headers":[`${BUSINESS_SEGMENT_HEADER_NAME}:${body.api.productGroup}`,`${PRODUCT_GROUP_HEADER_NAME}:${body.api.productGroup}`]
+                    }
+                },
+                "name":"request-transformer"
+            }
+            // kongConfig.plugins.push(requestTransformerPlugin);  // testing required
+    }
+    // End -- Adding headers via request-transformer for business segments and product groups
+
     utils.saveApiConfig(req.app, apiId, kongConfig);
     utils.saveApiDesc(req.app, apiId, body.desc);
     let swagger = '';
