@@ -71,9 +71,9 @@ auditlog.get('/', verifyAuditLogReadScope, function (req, res, next) {
     auditlog.getAllAuditlog(req.app, auditlog._usersModule, res, req.apiUserId, filter, orderBy, offset, limit, noCountCache, embed);
 });
 
-auditlog.delete('/:deleteBeforeDate', verifyAuditLogWriteScope, function (req, res, next) {
-    auditlog.deleteAuditLog(req.app, auditlog._usersModule, res, req.apiUserId, req.params.deleteBeforeDate);
-});
+// auditlog.delete('/:deleteBeforeDate', verifyAuditLogWriteScope, function (req, res, next) {
+//     auditlog.deleteAuditLog(req.app, auditlog._usersModule, res, req.apiUserId, req.params.deleteBeforeDate);
+// });
 
 auditlog.deleteAuditLog = function (app, users, res, loggedInUserId, deleteBeforeDate ) {
     debug(`deleteAuditLog() userid: ${loggedInUserId} deleteBeforeDate: ${deleteBeforeDate}`);

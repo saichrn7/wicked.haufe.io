@@ -1,7 +1,7 @@
 /* global Vue, $, injectedData */
 
 Vue.component('wicked-api', {
-    props: ['value', 'authMethods', 'groups', 'plans', 'pools', 'envPrefix'],
+    props: ['value', 'authMethods', 'groups', 'plans', 'suggested_tags', 'suggested_owners', 'businesssegments','productgroups', 'pools', 'envPrefix'],
     data: function () {
         return {
             newScopeId: '',
@@ -40,11 +40,24 @@ Vue.component('wicked-api', {
 
         <div class="form-group">
             <label>Required User Group:</label>
-            <p>Specify whether users need to belong to a specific user group to be able to see and use this API.</p>
-            <wicked-group-picker :include-none=true v-model="value.requiredGroup" :groups="groups" />
+            <p>Specify whether users need to belong to a specific user group to be able to see and use this API. <i>Leave this field blank if this is a public facing API</i> .</p>
+            <wicked-group-picker :include-none=false v-model="value.requiredGroup" :groups="groups" />
         </div>
 
-        <wicked-string-array :allow-empty=true v-model="value.tags" label="Tags:" />
+        <div class="form-group">
+            <label style="display:flex" >Business Segment: <p style="color:red"> *</p></label>
+            <p>Specify which Business Segment the API belongs to.</p>
+            <wicked-business-segment-picker :include-none=false v-model="value.businessSegment" :businesssegments="businesssegments" />
+        </div>
+
+        <div class="form-group">
+            <label style="display:flex">Product Group: <p style="color:red"> *</p></label>
+            <p>Specify which Product Group the API belongs to.</p>
+            <wicked-product-group-picker :include-none=false v-model="value.productGroup" :productgroups="productgroups" />
+        </div>
+
+        <wicked-string-array-tags :allow-empty=false v-model="value.tags" :suggested_tags="suggested_tags" label="Tags:" />
+        <wicked-string-array-owners :allow-empty=false v-model="value.owners" :suggested_owners="suggested_owners" label="Owners:" />
 
         <div class="form-group">
             <label>Authorization Mode:</label>
@@ -225,13 +238,50 @@ function isNumeric(value) {
     return /^\d+$/.test(value);
 }
 
+function isValidEmail(email) {
+    const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return pattern.test(email);
+}
+
 function validateData(callback) {
     let data = vm.$data;
     let error = '';
 
     let auths = ['key-auth','oauth2','jwt']
+
+    let token = data.desc;
+    if(token.length < 20){
+        error = error + ' Please provide description of more than 20 characters' ;
+    }
+
+    token = data.api.tags
+    if(token.length == 0){
+        error = error + '\n API tags must be specified';
+    }
+
+
+    token = data.api.owners
+    if(token == undefined || token.length == 0){
+        error = error + '\n API Owners must be specified';
+    }else{
+        for(let owner of token){
+            if(!isValidEmail(owner))
+            error = error + '\n Owner Email is invalid '+owner;
+        }
+    }
+
+    token = data.api.businessSegment
+    if(token == undefined){
+        error = error + '\n Business Segment must be specified';
+    }
+
+    token = data.api.productGroup
+    if(token == undefined){
+        error = error + '\n Product Group must be specified';
+    }
+
     //validate URI, most common errors we see
-    let token = data.config.api.upstream_url;
+     token = data.config.api.upstream_url;
     if (!isValidURL(token)) {
         error = error + '\nInvalid Upstream (backend) URL: ' + token;
     }
