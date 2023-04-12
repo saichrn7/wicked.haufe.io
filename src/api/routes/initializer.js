@@ -34,8 +34,8 @@ initializer.checkDynamicConfig = (callback) => {
     checks.push(addInitialUsers);
     checks.push(checkApiPlans);
     
-    //Commeting the subscriptions call
-    checks.push(checkSubscriptions);
+    //Commenting the subscriptions call
+    //checks.push(checkSubscriptions);
 
     // This must always be the last step
     checks.push(initializationFinished);
