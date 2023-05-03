@@ -232,6 +232,35 @@ app.setupHooks = () => {
     }
 };
 
+/**
+ * A utility endpoint which handles the request from external components for adding auditLogs.
+ * It accepts requests only from dev portal machine,used for component internal communication.
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @param {Function} next - The next middleware function in the chain.
+ *
+ * @param {string} req.body.action - Type of Action .
+ * @param {string} req.body.entity - The name of entity.
+ * @param {Object} req.body.data -  Audit Log data of entity to be added.
+ *
+ * @returns {Object} 
+ * 
+ *
+ * @example
+ * // POST /auditLog/add
+ * // {"action":"add","entity":"customheaders","data":{"apiId":"xyz","applicationId":"dummy-app"}}
+ * // Returns:
+ * // {"status":"200","message":"request received"}
+ */
+app.post('/auditLog/add',utils.checkAuthorization(utils.checkAuditLogHost,'localhost'),function(req,res) {
+    debug('got request for audit logging entities')
+    let auditData = req.body
+    auditData.id = utils.createRandomId();
+    auditData.utc = utils.getUtc();
+    auditlog.logAuditData(auditData)
+    res.json({"status":200,"message": "request received"})
+})
+
 // throw 404 for anything else
 app.use(function (req, res, next) {
     debug('Not found: ' + req.path);
@@ -268,32 +297,5 @@ app.use(function (err, req, res, next) {
     });
 });
 
-/**
- * A utility endpoint which handles the request from external components for adding auditLogs.
- * It accepts requests only from dev portal machine,used for component internal communication.
- * @param {Object} req - The Express request object.
- * @param {Object} res - The Express response object.
- * @param {Function} next - The next middleware function in the chain.
- *
- * @param {string} req.body.action - Type of Action .
- * @param {string} req.body.entity - The name of entity.
- * @param {Object} req.body.data -  Audit Log data of entity to be added.
- *
- * @returns {Object} 
- * 
- *
- * @example
- * // POST /auditLog/add
- * // {"action":"add","entity":"customheaders","data":{"apiId":"xyz","applicationId":"dummy-app"}}
- * // Returns:
- * // {"status":"200","message":"request received"}
- */
-app.post('/auditLog/add',utils.checkAuthorization(utils.checkAuditLogHost,'localhost'),function(req,res) {
-    debug('got request for audit logging entities')
-    let auditData = req.body
-    auditData.id = utils.createRandomId();
-    auditData.utc = utils.getUtc();
-    auditlog.logAuditData(auditData)
-    res.json({"status":200,"message": "request received"})
-})
+
 module.exports = app;
