@@ -843,4 +843,29 @@ utils.normalizeRedirectUris = (appInfo) => {
     return;
 };
 
+/**
+ * 
+ * @param {Object} req 
+ * @param {string} hostName 
+ * @returns {boolean} compares two hostnames for equality
+ */
+utils.checkAuditLogHost = (req,hostName) => {
+    return hostName == req.hostname
+}
+
+/**
+ * A midleware which executes the passed functions to filter requests
+ * @param {function} function 
+ * @param {string} configuredValue 
+ * executes or rejects the request based on passed function return status
+ */
+utils.checkAuthorization = (func,configuredValue) => {
+    return function (req, res, next) {
+        if(!func(req,configuredValue)) {
+            return res.status(403).send('Forbidden');
+        }
+        return next();
+    };
+};
+
 module.exports = utils;

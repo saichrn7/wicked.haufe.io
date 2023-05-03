@@ -222,4 +222,26 @@ auditlog.logEvent = function (app, eventData, callback) {
     }   
 };
 
+/**
+ * This function takes the auditLog event information and inserts into dev portal db.
+ * @param {Object} eventData - contains the audit log information
+ * @param {callback} optional callback function  
+ */
+auditlog.logAuditData = function(eventData,callback) {
+    debug('logging new audit Data')
+    const glob = utils.loadGlobals();
+    if (glob.auditlog && glob.auditlog.useAuditlog) {
+        setTimeout(retryAuditLog, 0, null, 5, eventData, function (err) {
+            debug('retryAuditLog() called back');
+            if (err) {
+                debug(err);
+                error(err);
+            }
+            if (callback) {
+                return callback(err);
+            }
+        });
+    }
+}
+
 module.exports = auditlog;
