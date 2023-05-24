@@ -615,13 +615,12 @@ export function kongGetApiPlugins(apiId: string, callback: Callback<KongCollecti
 export function kongPostApi(apiConfig: KongApi, callback: Callback<KongApi>): void {
     debug('kongPostApi()');
     const { service, routes } = wicked.kongApiToServiceAndRoutes(apiConfig);
-
     if(!service.retries && apiConfig.hasOwnProperty('retries'))
         {
             //overriding retries value from wicked-sdk function , prevents retries being null when '0' in apiConfig
             service.retries =  0 ; 
         }
-        
+
     let persistedService: KongService = null;
     let persistedRoute: KongRoute[] = [];
 
@@ -707,7 +706,6 @@ export function kongPatchApi(apiId: string, apiConfig: KongApi, callback: Callba
     debug('apiConfig: ' + JSON.stringify(apiConfig, null, 2));
 
     const { service, routes } = wicked.kongApiToServiceAndRoutes(apiConfig);
-
     if(!service.retries && apiConfig.hasOwnProperty('retries'))
         {
             //overriding retries value from wicked-sdk function , prevents retries being null when '0' in apiConfig
