@@ -138,7 +138,6 @@ function matchObjectsInternal(apiObject, kongObject) {
                 if (!apiRoute)
                     return false;
             }
-            return true;
         }
 
         if (typeof apiObject[prop] == "object") { // Recurse please
