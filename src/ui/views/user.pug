@@ -188,21 +188,20 @@ block content
                     .panel-body
                         for group in groups
                             if group.id !== "api-admin" && !authUser.superadmin
-                                break 
-                                    .checkbox
-                                        label
-                                            if group.isMember 
-                                                input(type='checkbox' name=group.id value=group.id checked)
-                                                | #{group.name}
-                                            else
-                                                input(type='checkbox' name=group.id value=group.id)
-                                                | #{group.name}
-                                            if glob.validatedUserGroup && glob.validatedUserGroup == group.id
-                                                small &nbsp;<i>This is the default group for users with a validated email address.</i>
-                                            if group.adminGroup
-                                                strong &nbsp;Admin group
-                                            if group.approverGroup
-                                                strong &nbsp;Approver group
+                                .checkbox
+                                    label
+                                        if group.isMember 
+                                            input(type='checkbox' name=group.id value=group.id checked)
+                                            | #{group.name}
+                                        else
+                                            input(type='checkbox' name=group.id value=group.id)
+                                            | #{group.name}
+                                        if glob.validatedUserGroup && glob.validatedUserGroup == group.id
+                                            small &nbsp;<i>This is the default group for users with a validated email address.</i>
+                                        if group.adminGroup
+                                            strong &nbsp;Admin group
+                                        if group.approverGroup
+                                            strong &nbsp;Approver group
             br
            
             br
