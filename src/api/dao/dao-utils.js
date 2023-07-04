@@ -18,9 +18,9 @@ daoUtils.isUserAdmin = (userInfo) => {
             let groupId = userInfo.groups[i];
             for (let groupIndex = 0; groupIndex < groups.groups.length; ++groupIndex) {
                 const group = groups.groups[groupIndex];
-                // if (groupId === "api) {
-                //     continue;
-                // }
+                if (groupId != group.id) {
+                    continue;
+                }
                 if (group.adminGroup) {
                     isAdmin = true;
                     break;
