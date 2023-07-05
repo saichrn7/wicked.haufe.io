@@ -225,7 +225,7 @@ router.get('/auditlog', mustBeAdminMiddleware, function (req, res, next) {
                 if (auditLog.user) {
                     auditLog.user = utils.sanitizeHtml(auditLog.user);
                 }
-                //utils.processDisplayNames(auditLog)
+                utils.processDisplayNames(auditLog)
             }
             res.json({
                 title: 'Audit Log',
