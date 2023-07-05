@@ -4,6 +4,7 @@ const { debug, info, warn, error } = require('portal-env').Logger('portal-api:da
 const utils = require('../routes/utils');
 
 const daoUtils = function () { };
+const GroupID = "api-admin";
 
 daoUtils.isUserAdmin = (userInfo) => {
     debug('isUserAdmin()');
@@ -72,19 +73,20 @@ daoUtils.isUserSuperAdmin = (userInfo) => {
         warn('isSuperAdmin : userInfo.groups is not defined.');
         warn(userInfo);
     } else {
-        for (let i = 0; i < userInfo.groups.length; ++i) {
-            const groupId = userInfo.groups[i];
-            for (let groupIndex = 0; groupIndex < groups.groups.length; ++groupIndex) {
-                const group = groups.groups[groupIndex];
-                if (groupId === "api-admin") {
-                    isSuperAdmin = true
-                    continue;
+        userInfo.groups.forEach(groupId => {
+            groups.groups.forEach(group => {
+                if (groupId != group.id) {
+                    return;
+                }
+                if (groupId === GroupID) {
+                    isSuperAdmin = true;
+                    return;
                 }  
-            }
+            });
             if (isSuperAdmin) {
-                break;
+                return false;
             }
-        }
+        });
     }
     return isSuperAdmin;
 };
